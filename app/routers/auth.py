@@ -1,44 +1,41 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Response, Request, Form
-from fastapi.security import OAuth2PasswordRequestForm
-from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.orm import Session
 from app.database.session import get_db
 from app.services import auth_service
+from app.schemas.usuario_schema import LoginRequest, Usuario
 import logging
 
 router = APIRouter(tags=["Autenticação"])
-templates = Jinja2Templates(directory="app/templates")
-
-@router.get("/login")
-async def login_page(request: Request):
-    return templates.TemplateResponse(request=request, name="login.html")
 
 @router.post("/login")
 async def login(
-    request: Request,
-    response: Response,
-    email: str = Form(...),
-    senha: str = Form(...),
+    dados: LoginRequest,
     db: Session = Depends(get_db)
 ):
-    usuario = auth_service.autenticar_usuario(db, email, senha)
+    usuario = auth_service.autenticar_usuario(db, dados.email, dados.senha)
     if not usuario:
-        return templates.TemplateResponse(
-            request=request, 
-            name="login.html", 
-            context={"erro": "E-mail ou senha incorretos"}
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="E-mail ou senha incorretos"
         )
     
     access_token = auth_service.criar_access_token(data={"sub": usuario.email})
     
-    # Armazenar token em cookie para facilitar o uso em templates
-    response = RedirectResponse(url="/processos", status_code=status.HTTP_303_SEE_OTHER)
-    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True)
-    return response
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "usuario": {
+            "id": usuario.id,
+            "nome": usuario.nome,
+            "email": usuario.email,
+            "cargo": usuario.cargo
+        }
+    }
 
-@router.get("/logout")
+@router.get("/me", response_model=Usuario)
+async def get_me(current_user: Usuario = Depends(auth_service.get_current_user)):
+    return current_user
+
+@router.post("/logout")
 async def logout():
-    response = RedirectResponse(url="/login")
-    response.delete_cookie("access_token")
-    return response
+    return {"message": "Logout realizado com sucesso"}

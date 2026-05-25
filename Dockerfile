@@ -1,21 +1,34 @@
-# Utilizar imagem base oficial do Python (versão slim para menor tamanho)
+# Estágio 1: Build do Frontend (Vue.js)
+FROM node:20-slim AS frontend-build
+WORKDIR /frontend
+COPY frontend/package*.json ./
+RUN npm install
+COPY frontend/ ./
+RUN npm run build
+
+# Estágio 2: Backend (FastAPI)
 FROM python:3.10-slim
 
-# Definir o diretório de trabalho dentro do contêiner
 WORKDIR /app
 
-# Copiar arquivo de dependências para o contêiner
-COPY requirements.txt .
+# Instalar dependências do sistema necessárias para algumas libs python
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-# Atualizar pip e instalar dependências sem usar cache para reduzir tamanho da imagem
+COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copiar todo o código fonte e a estrutura de diretórios para o contêiner
-COPY . .
+# Copiar o código do backend
+COPY app/ ./app/
+COPY .env* seed_admin.py ./
 
-# Expor a porta 8000 para acesso externo
+# Copiar os arquivos compilados do frontend para uma pasta que o FastAPI possa servir
+COPY --from=frontend-build /frontend/dist/ ./static/
+
+# Expor a porta 8000
 EXPOSE 8000
 
-# Comando para iniciar o servidor FastAPI via Uvicorn no modo host global
+# Comando para iniciar o servidor
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

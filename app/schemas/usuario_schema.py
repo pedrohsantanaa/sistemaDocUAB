@@ -10,6 +10,10 @@ class UsuarioBase(BaseModel):
 class UsuarioCriar(UsuarioBase):
     senha: str
 
+class LoginRequest(BaseModel):
+    email: EmailStr
+    senha: str
+
 class Usuario(UsuarioBase):
     id: int
 

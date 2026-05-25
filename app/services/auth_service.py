@@ -60,13 +60,26 @@ def autenticar_usuario(db: Session, email: str, senha_plana: str):
     return usuario
 
 def get_current_user(request: Request, db: Session = Depends(get_db)):
-    token = request.cookies.get("access_token")
+    # Tentar obter do Header Authorization (Padrão SPA)
+    auth_header = request.headers.get("Authorization")
+    token = None
+    
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:]
+    
+    # Se não houver no header, tentar no cookie (Legado/Jinja2)
     if not token:
-        return None # Ou redirecionar para login
+        token_cookie = request.cookies.get("access_token")
+        if token_cookie:
+            if token_cookie.startswith("Bearer "):
+                token = token_cookie[7:]
+            else:
+                token = token_cookie
+
+    if not token:
+        return None
     
     try:
-        if token.startswith("Bearer "):
-            token = token[7:]
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:

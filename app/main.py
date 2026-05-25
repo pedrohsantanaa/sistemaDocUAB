@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from app.database.session import engine, Base
 from app.routers import processos, views, auth, usuarios
-from app.models import processo, movimentacao, usuario, log
+from app.models import processo, movimentacao, usuario, log, tipo_processo, setor
 
 from fastapi.responses import RedirectResponse
 

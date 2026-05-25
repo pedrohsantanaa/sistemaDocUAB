@@ -8,7 +8,9 @@ from app.schemas.movimentacao_schema import MovimentacaoCriar, MovimentacaoDevol
 import logging
 
 from app.schemas.processo_schema import ProcessoCriar
-from app.services import processo_service, auth_service
+from app.services import processo_service, auth_service, configuracao_service
+from app.schemas.tipo_processo_schema import TipoProcessoCriar
+from app.schemas.setor_schema import SetorCriar
 from app.models.usuario import Usuario
 
 router = APIRouter()
@@ -170,4 +172,132 @@ async def web_relatorios(
     except Exception as e:
         logging.error(f"Erro ao carregar relatórios: {e}")
         return templates.TemplateResponse(request=request, name="500.html", context={"usuario_logado": current_user})
+
+# --- Configurações (Admin) ---
+
+@router.get("/configuracoes")
+async def web_configuracoes(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(auth_service.get_current_user)
+):
+    if not current_user:
+        return RedirectResponse(url="/login")
+    
+    auth_service.is_admin(current_user)
+    
+    tipos = configuracao_service.get_tipos_processo(db)
+    setores = configuracao_service.get_setores(db)
+    
+    return templates.TemplateResponse(
+        request=request,
+        name="configuracoes.html",
+        context={
+            "titulo_pagina": "Configurações",
+            "usuario_logado": current_user,
+            "tipos": tipos,
+            "setores": setores
+        }
+    )
+
+# Tipos de Processo
+@router.post("/configuracoes/tipos")
+async def web_criar_tipo(
+    nome: str = Form(...),
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(auth_service.get_current_user)
+):
+    if not current_user:
+        return RedirectResponse(url="/login")
+    auth_service.is_admin(current_user)
+    
+    try:
+        configuracao_service.criar_tipo_processo(db, TipoProcessoCriar(nome=nome))
+        return RedirectResponse(url="/configuracoes?msg=Tipo criado com sucesso", status_code=303)
+    except Exception as e:
+        return RedirectResponse(url=f"/configuracoes?erro={str(e)}", status_code=303)
+
+@router.post("/configuracoes/tipos/editar/{tipo_id}")
+async def web_editar_tipo(
+    tipo_id: int,
+    nome: str = Form(...),
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(auth_service.get_current_user)
+):
+    if not current_user:
+        return RedirectResponse(url="/login")
+    auth_service.is_admin(current_user)
+    
+    try:
+        configuracao_service.atualizar_tipo_processo(db, tipo_id, TipoProcessoCriar(nome=nome))
+        return RedirectResponse(url="/configuracoes?msg=Tipo atualizado com sucesso", status_code=303)
+    except Exception as e:
+        return RedirectResponse(url=f"/configuracoes?erro={str(e)}", status_code=303)
+
+@router.get("/configuracoes/tipos/deletar/{tipo_id}")
+async def web_deletar_tipo(
+    tipo_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(auth_service.get_current_user)
+):
+    if not current_user:
+        return RedirectResponse(url="/login")
+    auth_service.is_admin(current_user)
+    
+    try:
+        configuracao_service.deletar_tipo_processo(db, tipo_id)
+        return RedirectResponse(url="/configuracoes?msg=Tipo excluído com sucesso", status_code=303)
+    except Exception as e:
+        return RedirectResponse(url=f"/configuracoes?erro={str(e)}", status_code=303)
+
+# Setores
+@router.post("/configuracoes/setores")
+async def web_criar_setor(
+    nome: str = Form(...),
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(auth_service.get_current_user)
+):
+    if not current_user:
+        return RedirectResponse(url="/login")
+    auth_service.is_admin(current_user)
+    
+    try:
+        configuracao_service.criar_setor(db, SetorCriar(nome=nome))
+        return RedirectResponse(url="/configuracoes?msg=Setor criado com sucesso", status_code=303)
+    except Exception as e:
+        return RedirectResponse(url=f"/configuracoes?erro={str(e)}", status_code=303)
+
+@router.post("/configuracoes/setores/editar/{setor_id}")
+async def web_editar_setor(
+    setor_id: int,
+    nome: str = Form(...),
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(auth_service.get_current_user)
+):
+    if not current_user:
+        return RedirectResponse(url="/login")
+    auth_service.is_admin(current_user)
+    
+    try:
+        configuracao_service.atualizar_setor(db, setor_id, SetorCriar(nome=nome))
+        return RedirectResponse(url="/configuracoes?msg=Setor atualizado com sucesso", status_code=303)
+    except Exception as e:
+        return RedirectResponse(url=f"/configuracoes?erro={str(e)}", status_code=303)
+
+@router.get("/configuracoes/setores/deletar/{setor_id}")
+async def web_deletar_setor(
+    setor_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(auth_service.get_current_user)
+):
+    if not current_user:
+        return RedirectResponse(url="/login")
+    auth_service.is_admin(current_user)
+    
+    try:
+        configuracao_service.deletar_setor(db, setor_id)
+        return RedirectResponse(url="/configuracoes?msg=Setor excluído com sucesso", status_code=303)
+    except Exception as e:
+        return RedirectResponse(url=f"/configuracoes?erro={str(e)}", status_code=303)
+
 

@@ -34,7 +34,12 @@
                     </div>
                     <div class="mb-3">
                         <label for="setor_destino" class="form-label text-muted">Setor de Destino</label>
-                        <input type="text" class="form-control" id="setor_destino" name="setor_destino" placeholder="Ex: Contabilidade" required>
+                        <select class="form-select" id="setor_destino" name="setor_destino" required>
+                            <option value="" selected disabled>Selecione o setor de destino...</option>
+                            {% for setor in setores %}
+                            <option value="{{ setor.nome }}">{{ setor.nome }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label for="observacoes" class="form-label text-muted">Observações</label>

@@ -41,14 +41,24 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="tipo_processo" class="form-label text-muted">Tipo de Processo</label>
-                            <input type="text" class="form-control" id="tipo_processo" name="tipo_processo" placeholder="Ex: Administrativo" required>
+                            <select class="form-select" id="tipo_processo" name="tipo_processo" required>
+                                <option value="" selected disabled>Selecione um tipo...</option>
+                                {% for tipo in tipos %}
+                                <option value="{{ tipo.nome }}">{{ tipo.nome }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="setor_responsavel" class="form-label text-muted">Setor Responsável</label>
-                            <input type="text" class="form-control" id="setor_responsavel" name="setor_responsavel" placeholder="Ex: Jurídico" required>
+                            <select class="form-select" id="setor_responsavel" name="setor_responsavel" required>
+                                <option value="" selected disabled>Selecione um setor...</option>
+                                {% for setor in setores %}
+                                <option value="{{ setor.nome }}">{{ setor.nome }}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="status" class="form-label text-muted">Status Inicial</label>

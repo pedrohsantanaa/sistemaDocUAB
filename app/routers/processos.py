@@ -3,7 +3,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from typing import Optional
 from app.database.session import get_db
-from app.services import processo_service, auth_service
+from app.services import processo_service, auth_service, configuracao_service
 from app.models.usuario import Usuario
 from fastapi.responses import RedirectResponse
 import logging
@@ -82,30 +82,37 @@ async def web_historico_processo(
 @router.get("/cadastrar")
 async def web_form_cadastrar_processo(
     request: Request,
+    db: Session = Depends(get_db),
     current_user: Usuario = Depends(auth_service.get_current_user)
 ):
     if not current_user:
         return RedirectResponse(url="/login")
+    
+    tipos = configuracao_service.get_tipos_processo(db)
+    setores = configuracao_service.get_setores(db)
         
     return templates.TemplateResponse(
         request=request,
         name="processos/cadastrar.html",
-        context={"usuario_logado": current_user}
+        context={"usuario_logado": current_user, "tipos": tipos, "setores": setores}
     )
 
 @router.get("/retirada")
 async def web_form_retirada(
     request: Request, 
     processo_id: Optional[int] = None,
+    db: Session = Depends(get_db),
     current_user: Usuario = Depends(auth_service.get_current_user)
 ):
     if not current_user:
         return RedirectResponse(url="/login")
+    
+    setores = configuracao_service.get_setores(db)
         
     return templates.TemplateResponse(
         request=request,
         name="processos/retirada.html",
-        context={"processo_id": processo_id, "usuario_logado": current_user}
+        context={"processo_id": processo_id, "usuario_logado": current_user, "setores": setores}
     )
 
 @router.get("/devolucao")
@@ -142,4 +149,5 @@ async def web_retirar_processo_direto(request: Request, processo_id: int):
 @router.get("/devolver/{processo_id}")
 async def web_devolver_processo_direto(request: Request, processo_id: int):
     return RedirectResponse(url=f"/processos/devolucao?processo_id={processo_id}")
+
 

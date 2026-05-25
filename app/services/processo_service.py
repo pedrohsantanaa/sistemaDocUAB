@@ -19,7 +19,9 @@ def criar_processo(db: Session, dados: ProcessoCriar):
         numero_contrato=dados.numero_contrato,
         tipo_processo=dados.tipo_processo,
         setor_responsavel=dados.setor_responsavel,
-        status=dados.status.value if dados.status else "Disponível"
+        status_id=dados.status_id,
+        data_entrada=dados.data_entrada,
+        observacao=dados.observacao
     )
     
     try:
@@ -73,6 +75,11 @@ def buscar_processos_com_filtros(db: Session, busca: str = None, status: str = N
         )
         
     if status and status != "Todos":
-        query = query.filter(Processo.status == status)
+        # Se status for numérico (ID), filtra por status_id, senão tenta pelo nome (legado ou texto)
+        if status.isdigit():
+            query = query.filter(Processo.status_id == int(status))
+        else:
+            from app.models.status_processo import StatusProcesso
+            query = query.join(StatusProcesso).filter(StatusProcesso.nome == status)
         
     return query.all()

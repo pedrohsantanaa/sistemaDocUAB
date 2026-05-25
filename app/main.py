@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from app.database.session import engine, Base
 from app.routers import processos, auth, usuarios, configuracoes, relatorios
-from app.models import processo, movimentacao, usuario, log, tipo_processo, setor
+from app.models import processo, movimentacao, usuario, log, tipo_processo, setor, status_processo
 import os
 
 # Criar as tabelas no banco de dados

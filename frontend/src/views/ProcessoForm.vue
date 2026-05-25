@@ -6,12 +6,15 @@ import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
 import Select from 'primevue/select'
 import Message from 'primevue/message'
+import Textarea from 'primevue/textarea'
+import DatePicker from 'primevue/datepicker'
 
 const router = useRouter()
 const loading = ref(false)
 const error = ref('')
 const tipos = ref([])
 const setores = ref([])
+const statusOpcoes = ref([])
 
 const form = ref({
   nome_cliente: '',
@@ -19,17 +22,29 @@ const form = ref({
   numero_contrato: '',
   tipo_processo: '',
   setor_responsavel: '',
-  status: 'Disponível'
+  status_id: null,
+  data_entrada: new Date(),
+  observacao: ''
 })
 
 const fetchConfig = async () => {
   try {
-    const [tiposRes, setoresRes] = await Promise.all([
-      api.get('/processos/tipos'),
-      api.get('/processos/setores')
+    const [tiposRes, setoresRes, statusRes] = await Promise.all([
+      api.get('/configuracoes/tipos'),
+      api.get('/configuracoes/setores'),
+      api.get('/configuracoes/status')
     ])
     tipos.value = tiposRes.data
     setores.value = setoresRes.data
+    statusOpcoes.value = statusRes.data
+    
+    // Tenta selecionar "Disponível" como padrão
+    const statusPadrao = statusRes.data.find(s => s.nome === 'Disponível')
+    if (statusPadrao) {
+      form.value.status_id = statusPadrao.id
+    } else if (statusRes.data.length > 0) {
+      form.value.status_id = statusRes.data[0].id
+    }
   } catch (err) {
     console.error('Erro ao buscar configurações', err)
   }
@@ -39,6 +54,7 @@ const handleSubmit = async () => {
   loading.value = true
   error.value = ''
   try {
+    // Formatar a data para o backend se necessário, mas o FastAPI/Pydantic geralmente lida bem com ISO strings
     await api.post('/processos/cadastrar', form.value)
     router.push('/')
   } catch (err) {
@@ -83,6 +99,21 @@ onMounted(fetchConfig)
         <div class="flex flex-col gap-2">
           <label for="setor_responsavel" class="font-semibold">Setor Responsável</label>
           <Select id="setor_responsavel" v-model="form.setor_responsavel" :options="setores" optionLabel="nome" optionValue="nome" placeholder="Selecione..." required />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label for="status" class="font-semibold">Status Inicial</label>
+          <Select id="status" v-model="form.status_id" :options="statusOpcoes" optionLabel="nome" optionValue="id" placeholder="Selecione..." required />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label for="data_entrada" class="font-semibold">Data de Entrada</label>
+          <DatePicker id="data_entrada" v-model="form.data_entrada" dateFormat="dd/mm/yy" showIcon required />
+        </div>
+
+        <div class="flex flex-col gap-2 md:col-span-2">
+          <label for="observacao" class="font-semibold">Observações (Opcional)</label>
+          <Textarea id="observacao" v-model="form.observacao" rows="3" />
         </div>
 
         <div class="md:col-span-2">

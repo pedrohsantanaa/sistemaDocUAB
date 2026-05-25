@@ -1,14 +1,29 @@
 from app.database.session import SessionLocal
 from app.models.usuario import Usuario
-from app.models.movimentacao import Movimentacao # Import necessário para relacionamentos
-from app.models.processo import Processo         # Import necessário para relacionamentos
+from app.models.movimentacao import Movimentacao
+from app.models.processo import Processo
+from app.models.status_processo import StatusProcesso
 from app.services.auth_service import get_password_hash
+
+def seed_status(db):
+    status_iniciais = ["Disponível", "Em Posse", "Pendente", "Liquidado", "Arquivado"]
+    for nome in status_iniciais:
+        exists = db.query(StatusProcesso).filter(StatusProcesso.nome == nome).first()
+        if not exists:
+            novo_status = StatusProcesso(nome=nome)
+            db.add(novo_status)
+            print(f"Status criado: {nome}")
+    db.commit()
 
 def seed_admin():
     db = SessionLocal()
     try:
+        # Criar status iniciais primeiro
+        seed_status(db)
+
         admin_exists = db.query(Usuario).filter(Usuario.email == "admin@docuab.com").first()
-        if not admin_exists:
+...
+
             admin = Usuario(
                 nome="Administrador",
                 email="admin@docuab.com",

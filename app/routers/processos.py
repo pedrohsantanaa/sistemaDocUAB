@@ -19,14 +19,20 @@ async def listar_processos(
 ):
     try:
         processos_encontrados = processo_service.buscar_processos_com_filtros(db, busca, status)
-        
+
         # Calcular estatísticas básicas
         from app.models.processo import Processo
+        from app.models.status_processo import StatusProcesso
+
         total_processos = db.query(Processo).count()
-        processos_disponiveis = db.query(Processo).filter(Processo.status == "Disponível").count()
-        processos_em_posse = db.query(Processo).filter(Processo.status == "Em Posse").count()
-        processos_pendentes = db.query(Processo).filter(Processo.status == "Pendente").count()
-        
+
+        def get_count_by_status(nome_status):
+            return db.query(Processo).join(StatusProcesso).filter(StatusProcesso.nome == nome_status).count()
+
+        processos_disponiveis = get_count_by_status("Disponível")
+        processos_em_posse = get_count_by_status("Em Posse")
+        processos_pendentes = get_count_by_status("Pendente")
+
         return {
             "processos": processos_encontrados,
             "stats": {
@@ -36,6 +42,7 @@ async def listar_processos(
                 "pendentes": processos_pendentes
             }
         }
+
     except Exception as e:
         logging.error(f"Erro ao listar processos: {e}")
         raise HTTPException(status_code=500, detail=str(e))

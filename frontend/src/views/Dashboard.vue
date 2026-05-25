@@ -16,6 +16,7 @@ const stats = ref({})
 const loading = ref(true)
 const busca = ref('')
 const statusFiltro = ref(null)
+const statusOpcoes = ref([])
 const router = useRouter()
 
 // Modals State
@@ -31,15 +32,8 @@ const formRetirada = ref({
 })
 
 const formDevolucao = ref({
-  novo_status_processo: 'Disponível'
+  novo_status_processo: ''
 })
-
-const statusOpcoes = [
-  { label: 'Disponível', value: 'Disponível' },
-  { label: 'Pendente', value: 'Pendente' },
-  { label: 'Liquidado', value: 'Liquidado' },
-  { label: 'Arquivado', value: 'Arquivado' }
-]
 
 const fetchProcessos = async () => {
   loading.value = true
@@ -60,10 +54,14 @@ const fetchProcessos = async () => {
 
 const fetchConfig = async () => {
   try {
-    const response = await api.get('/configuracoes/setores')
-    setores.value = response.data
+    const [setoresRes, statusRes] = await Promise.all([
+      api.get('/configuracoes/setores'),
+      api.get('/configuracoes/status')
+    ])
+    setores.value = setoresRes.data
+    statusOpcoes.value = statusRes.data.map(s => ({ label: s.nome, value: s.nome }))
   } catch (err) {
-    console.error('Erro ao buscar setores', err)
+    console.error('Erro ao buscar configurações', err)
   }
 }
 
@@ -75,7 +73,8 @@ const abrirRetirada = (processo) => {
 
 const abrirDevolucao = (processo) => {
   selectedProcesso.value = processo
-  formDevolucao.value = { novo_status_processo: 'Disponível' }
+  const statusPadrao = statusOpcoes.value.find(s => s.label === 'Disponível')?.value || ''
+  formDevolucao.value = { novo_status_processo: statusPadrao }
   showDevolucaoDialog.value = true
 }
 
@@ -105,7 +104,6 @@ const confirmarRetirada = async () => {
 const confirmarDevolucao = async () => {
   submetendo.value = true
   try {
-    // Buscar a movimentação ativa para o processo
     const histRes = await api.get(`/processos/${selectedProcesso.value.id}/historico`)
     const movimentacaoAtiva = histRes.data.historico.find(m => !m.data_devolucao)
     
@@ -131,7 +129,9 @@ const getStatusClass = (status) => {
     case 'Disponível': return 'bg-green-100 text-green-800'
     case 'Em Posse': return 'bg-amber-100 text-amber-800'
     case 'Pendente': return 'bg-red-100 text-red-800'
-    default: return 'bg-blue-100 text-blue-800'
+    case 'Liquidado': return 'bg-blue-100 text-blue-800'
+    case 'Arquivado': return 'bg-gray-100 text-gray-800'
+    default: return 'bg-purple-100 text-purple-800'
   }
 }
 
@@ -152,7 +152,6 @@ onMounted(() => {
         </div>
         <Button label="Novo Processo" icon="pi pi-plus" class="bg-accent-500 hover:bg-accent-600 border-none px-6 py-4 font-bold shadow-xl transition-all h-fit" @click="router.push('/processos/cadastrar')" />
       </div>
-      <!-- Decorative element -->
       <div class="absolute right-[-20px] bottom-[-20px] opacity-10 rotate-12">
         <i class="pi pi-file-edit text-[160px] text-white"></i>
       </div>
@@ -201,12 +200,15 @@ onMounted(() => {
     <!-- Main Content Card -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       <!-- Search/Filter Header -->
-      <div class="p-6 border-b border-gray-50 flex gap-4 items-center bg-gray-50/50">
-        <div class="relative flex-1">
-          <i class="pi pi-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+      <div class="p-6 border-b border-gray-50 flex flex-col md:flex-row gap-4 items-center bg-gray-50/50">
+        <div class="relative flex-1 w-full">
+          <i class="pi pi-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
           <InputText v-model="busca" placeholder="Buscar por cliente, contrato ou CPF..." class="pl-12 w-full border-gray-200" @keyup.enter="fetchProcessos" />
         </div>
-        <Button label="Buscar" icon="pi pi-search" class="px-6" @click="fetchProcessos" />
+        <div class="flex gap-2 w-full md:w-auto">
+          <Select v-model="statusFiltro" :options="statusOpcoes" optionLabel="label" optionValue="value" placeholder="Filtrar por Status" showClear class="w-full md:w-48" @change="fetchProcessos" />
+          <Button label="Buscar" icon="pi pi-search" class="px-6" @click="fetchProcessos" />
+        </div>
       </div>
 
       <!-- Data Table -->
@@ -215,10 +217,10 @@ onMounted(() => {
         <Column field="nome_cliente" header="Cliente" sortable></Column>
         <Column field="tipo_processo" header="Tipo de Processo"></Column>
         <Column field="setor_responsavel" header="Setor Atual"></Column>
-        <Column field="status" header="Status">
+        <Column field="status.nome" header="Status">
           <template #body="slotProps">
-            <span :class="getStatusClass(slotProps.data.status)" class="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider">
-              {{ slotProps.data.status }}
+            <span :class="getStatusClass(slotProps.data.status?.nome)" class="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider">
+              {{ slotProps.data.status?.nome }}
             </span>
           </template>
         </Column>
@@ -226,8 +228,8 @@ onMounted(() => {
           <template #body="slotProps">
             <div class="flex gap-2 justify-end">
               <Button icon="pi pi-history" rounded text severity="secondary" title="Ver Histórico" @click="router.push(`/processos/${slotProps.data.id}/historico`)" />
-              <Button v-if="slotProps.data.status === 'Disponível'" icon="pi pi-sign-out" rounded text severity="warn" title="Registrar Retirada" @click="abrirRetirada(slotProps.data)" />
-              <Button v-if="slotProps.data.status === 'Em Posse'" icon="pi pi-sign-in" rounded text severity="success" title="Registrar Devolução" @click="abrirDevolucao(slotProps.data)" />
+              <Button v-if="slotProps.data.status?.nome === 'Disponível'" icon="pi pi-sign-out" rounded text severity="warn" title="Registrar Retirada" @click="abrirRetirada(slotProps.data)" />
+              <Button v-if="slotProps.data.status?.nome === 'Em Posse'" icon="pi pi-sign-in" rounded text severity="success" title="Registrar Devolução" @click="abrirDevolucao(slotProps.data)" />
             </div>
           </template>
         </Column>

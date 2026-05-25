@@ -1,11 +1,5 @@
 from pydantic import BaseModel, validator
 from typing import Optional
-from enum import Enum
-
-class StatusEnum(str, Enum):
-    disponivel = "Disponível"
-    liquidado = "Liquidado"
-    arquivado = "Arquivado"
 
 class MovimentacaoCriar(BaseModel):
     processo_id: int
@@ -21,4 +15,4 @@ class MovimentacaoCriar(BaseModel):
 
 class MovimentacaoDevolucao(BaseModel):
     movimentacao_id: int
-    novo_status_processo: StatusEnum
+    novo_status_processo: str

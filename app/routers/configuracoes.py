@@ -6,6 +6,7 @@ from app.services import auth_service, configuracao_service
 from app.models.usuario import Usuario
 from app.schemas.tipo_processo_schema import TipoProcessoCriar, TipoProcessoSchema
 from app.schemas.setor_schema import SetorCriar, SetorSchema
+from app.schemas.status_processo_schema import StatusProcessoCriar, StatusProcessoSchema
 
 router = APIRouter(prefix="/api/configuracoes", tags=["Configurações"])
 
@@ -98,5 +99,51 @@ async def deletar_setor(
     try:
         configuracao_service.deletar_setor(db, setor_id)
         return {"message": "Setor excluído com sucesso"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# Status de Processo
+@router.get("/status", response_model=List[StatusProcessoSchema])
+async def listar_status(
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(auth_service.get_current_user)
+):
+    return configuracao_service.get_status_processo(db)
+
+@router.post("/status", response_model=StatusProcessoSchema, status_code=status.HTTP_201_CREATED)
+async def criar_status(
+    dados: StatusProcessoCriar,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(auth_service.get_current_user)
+):
+    auth_service.is_admin(current_user)
+    try:
+        return configuracao_service.criar_status_processo(db, dados)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.put("/status/{status_id}", response_model=StatusProcessoSchema)
+async def editar_status(
+    status_id: int,
+    dados: StatusProcessoCriar,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(auth_service.get_current_user)
+):
+    auth_service.is_admin(current_user)
+    try:
+        return configuracao_service.atualizar_status_processo(db, status_id, dados)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.delete("/status/{status_id}")
+async def deletar_status(
+    status_id: int,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(auth_service.get_current_user)
+):
+    auth_service.is_admin(current_user)
+    try:
+        configuracao_service.deletar_status_processo(db, status_id)
+        return {"message": "Status excluído com sucesso"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

@@ -1,97 +1,126 @@
-# Sistema DocUAB - Gestão de Processos Físicos
+# Sistema DocUAB - Gestão Documental e Rastreabilidade
 
-Sistema para controle de movimentação e rastreabilidade de arquivos e processos físicos, desenvolvido com foco em integridade de dados e facilidade de uso.
+Sistema moderno para controle de movimentação, arquivamento e rastreabilidade de processos físicos. Desenvolvido para oferecer eficiência, segurança e uma interface intuitiva.
 
-## 🚀 Tecnologias
+## 🛠️ Stack Tecnológica
 
-- **Backend:** [FastAPI](https://fastapi.tiangolo.com/) (Python 3.10+)
-- **Banco de Dados:** PostgreSQL com [SQLAlchemy ORM](https://www.sqlalchemy.org/)
-- **Frontend:** Jinja2 Templates, Bootstrap 5 e FontAwesome
-- **Autenticação:** JWT (JSON Web Tokens) com Cookies seguros
-- **Containerização:** Docker e Docker Compose
+### Backend
+- **Framework:** [FastAPI](https://fastapi.tiangolo.com/) (Python 3.10+)
+- **Banco de Dados:** PostgreSQL 15
+- **ORM:** [SQLAlchemy](https://www.sqlalchemy.org/)
+- **Autenticação:** JWT (JSON Web Tokens) com segurança baseada em roles (RBAC)
+- **Validação:** Pydantic v2
+
+### Frontend
+- **Framework:** [Vue.js 3](https://vuejs.org/) (Composition API)
+- **Ferramenta de Build:** Vite
+- **UI Components:** [PrimeVue v4](https://primevue.org/)
+- **Estilização:** [Tailwind CSS 4](https://tailwindcss.com/)
+- **Gerenciamento de Estado:** Pinia
+- **Gráficos:** Chart.js
+
+### Infraestrutura
+- **Containerização:** Docker & Docker Compose (Multi-stage builds)
+- **Servidor:** Uvicorn
 
 ## ✨ Funcionalidades Principais
 
-- **Dashboard de Processos:** Visão geral de todos os processos com filtros por status e busca textual.
-- **Gestão de Movimentações:** Registro simplificado de retirada e devolução de processos físicos.
-- **Rastreabilidade (Histórico):** Log detalhado de quem retirou, quando devolveu e observações de cada processo.
-- **Relatórios & KPIs:** Gráficos interativos (Chart.js) mostrando a distribuição de status e volume de movimentações.
-- **Níveis de Acesso (RBAC):**
-  - **Administrador:** Gerenciamento de usuários, visualização de relatórios e controle total.
-  - **Usuário Comum:** Consulta de processos e registro de movimentações.
-- **Segurança:** Senhas criptografadas com `bcrypt` e proteção de rotas via dependências do FastAPI.
+- **📦 Gestão de Processos:** Cadastro, edição e acompanhamento de processos físicos.
+- **🔄 Fluxo de Movimentação:** Registro detalhado de entradas, saídas e transferências entre setores.
+- **🕒 Histórico Completo:** Rastreabilidade total de cada documento com log de alterações.
+- **📊 Dashboard Inteligente:** Visualização de KPIs, status de processos e volume de movimentações via gráficos interativos.
+- **👥 Controle de Acesso (RBAC):** Gestão de usuários com diferentes níveis de permissão (Admin e Usuário).
+- **⚙️ Configurações Dinâmicas:** Gerenciamento de setores, tipos de processos e status de processos.
 
-## 🛠️ Instalação e Configuração
+## 🚀 Como Executar o Projeto
 
 ### Pré-requisitos
-- Python 3.10 ou superior
-- Docker & Docker Compose (Opcional para execução em container)
+- Docker e Docker Compose **OU**
+- Python 3.10+ e Node.js 20+
 
-### Passo a Passo (Local)
+### 🐳 Via Docker (Recomendado)
 
-1. **Clone o repositório:**
-   ```bash
-   git clone <url-do-repositorio>
-   cd sistemaDocUAB
-   ```
-
-2. **Crie um ambiente virtual e instale as dependências:**
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # Linux/macOS
-   # ou
-   .\venv\Scripts\activate  # Windows
-   
-   pip install -r requirements.txt
-   ```
-
-3. **Configure as variáveis de ambiente:**
-   Crie um arquivo `.env` na raiz do projeto (opcional, utiliza valores padrão se ausente):
-   ```env
-   SECRET_KEY=sua-chave-secreta-aqui
-   ALGORITHM=HS256
-   DATABASE_URL=postgresql://postgres:postgres@db:5432/sistemadocuab
-   ```
-
-4. **Crie o usuário administrador inicial:**
-   ```bash
-   PYTHONPATH=. python3 seed_admin.py
-   ```
-   *Credenciais padrão:* `admin@docuab.com` / `admin123`
-
-5. **Inicie o servidor:**
-   ```bash
-   uvicorn app.main:app --reload
-   ```
-   Acesse: `http://localhost:8000`
-
-### Usando Docker
+A forma mais rápida de subir o ambiente completo (Backend, Frontend, Banco de Dados e pgAdmin):
 
 ```bash
 docker-compose up --build -d
 ```
-O sistema estará disponível em `http://localhost:8001`.
+
+- **Aplicação:** `http://localhost:8001`
+- **pgAdmin:** `http://localhost:5050` (Login: `admin@admin.com` / `admin`)
+- **Documentação API (Swagger):** `http://localhost:8001/docs`
+
+### 💻 Desenvolvimento Local (Sem Docker)
+
+#### 1. Banco de Dados
+Certifique-se de ter um PostgreSQL rodando e crie um banco chamado `sistemadocuab`.
+
+#### 2. Backend (FastAPI)
+```bash
+# Entrar na pasta raiz
+cd sistemaDocUAB
+
+# Criar e ativar ambiente virtual
+python -m venv venv
+source venv/bin/activate  # Linux/macOS
+# .\venv\Scripts\activate # Windows
+
+# Instalar dependências
+pip install -r requirements.txt
+
+# Criar arquivo .env
+cp .env.example .env # Caso exista, ou crie manualmente
+
+# Executar script de semente (Admin inicial)
+PYTHONPATH=. python seed_admin.py
+
+# Iniciar o servidor
+uvicorn app.main:app --reload
+```
+
+#### 3. Frontend (Vue.js)
+```bash
+# Entrar na pasta do frontend
+cd frontend
+
+# Instalar dependências
+npm install
+
+# Iniciar servidor de desenvolvimento
+npm run dev
+```
+Acesse `http://localhost:5173` (ou a porta indicada pelo Vite).
 
 ## 📁 Estrutura do Projeto
 
 ```text
-├── app/
-│   ├── database/    # Configuração da conexão e sessão do banco
-│   ├── models/      # Definição das tabelas (SQLAlchemy)
-│   ├── schemas/     # Validação de dados (Pydantic)
-│   ├── services/    # Regras de negócio e lógica complexa
-│   ├── routers/     # Controladores e rotas da API/Web
-│   ├── static/      # Arquivos estáticos (CSS, JS, Imagens)
-│   └── templates/   # Páginas HTML (Jinja2)
-├── data/            # Local para backups ou logs (não mais usado para SQLite)
-├── Dockerfile       # Receita da imagem Docker
-├── docker-compose.yml
-└── seed_admin.py    # Script de criação do admin inicial
+├── app/                # Backend FastAPI
+│   ├── database/       # Conexão e sessão do banco
+│   ├── models/         # Modelos SQLAlchemy
+│   ├── routers/        # Rotas da API
+│   ├── schemas/        # Schemas Pydantic
+│   ├── services/       # Lógica de negócio
+│   └── templates/      # (Opcional) Templates legados
+├── frontend/           # Frontend Vue.js 3
+│   ├── src/
+│   │   ├── api/        # Integração com backend (Axios)
+│   │   ├── components/ # Componentes reutilizáveis
+│   │   ├── stores/     # Estado global (Pinia)
+│   │   └── views/      # Páginas da aplicação
+├── scripts/            # Scripts utilitários (Backup, etc)
+├── Dockerfile          # Build multi-stage
+└── docker-compose.yml  # Orquestração de serviços
 ```
 
-## 🔐 Segurança
+## 🔒 Segurança
 
-O sistema utiliza cookies `HttpOnly` para armazenar o token JWT, prevenindo ataques de XSS. O acesso a rotas sensíveis como `/usuarios` e `/relatorios` é restrito exclusivamente ao perfil `admin`.
+- **JWT em Cookies HttpOnly:** Proteção contra XSS.
+- **Hashing de Senhas:** Utiliza `bcrypt` para armazenamento seguro.
+- **CORS:** Configurado para aceitar requisições apenas de origens autorizadas.
+
+## 📄 Licença
+
+Este projeto está sob a licença [MIT](LICENSE).
 
 ---
-Desenvolvido para **UAB - Universidade Aberta do Brasil**.
+Desenvolvido para **Fomento Tocantins / UAB**.

@@ -162,7 +162,10 @@ logs/
 # Windows specific
 Thumbs.db
 Desktop.ini
-*$Zone.Identifier
+*Zone.Identifier
+
+# Project specific
+specs.md
 
 # macOS specific
 .DS_Store

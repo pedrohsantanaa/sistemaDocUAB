@@ -10,7 +10,7 @@ import os
 # Criar as tabelas no banco de dados
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI(title="Sistema de Gestão de Processos Físicos")
+app = FastAPI(title="Sistema de Gestão Documental - Fomento Tocantins")
 
 # Configurar CORS
 app.add_middleware(

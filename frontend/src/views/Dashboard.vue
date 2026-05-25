@@ -143,9 +143,19 @@ onMounted(() => {
 
 <template>
   <div class="space-y-8">
-    <div class="flex justify-between items-center">
-      <h1 class="text-2xl font-bold text-gray-800">Processos Cadastrados</h1>
-      <Button label="Cadastrar Processo" icon="pi pi-plus" class="p-button-primary shadow-md" @click="router.push('/processos/cadastrar')" />
+    <!-- Welcome Header -->
+    <div class="bg-gradient-to-r from-primary-800 to-primary-700 p-8 rounded-2xl shadow-lg border border-primary-600 relative overflow-hidden">
+      <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <h1 class="text-3xl font-bold text-white mb-2">Painel de Monitoramento</h1>
+          <p class="text-primary-100 font-medium">Bem-vindo ao Sistema de Gestão Documental da Agência de Fomento - TO</p>
+        </div>
+        <Button label="Novo Processo" icon="pi pi-plus" class="bg-accent-500 hover:bg-accent-600 border-none px-6 py-4 font-bold shadow-xl transition-all h-fit" @click="router.push('/processos/cadastrar')" />
+      </div>
+      <!-- Decorative element -->
+      <div class="absolute right-[-20px] bottom-[-20px] opacity-10 rotate-12">
+        <i class="pi pi-file-edit text-[160px] text-white"></i>
+      </div>
     </div>
 
     <!-- Stats Cards -->

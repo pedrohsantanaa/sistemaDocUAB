@@ -5,7 +5,7 @@ Sistema para controle de movimentação e rastreabilidade de arquivos e processo
 ## 🚀 Tecnologias
 
 - **Backend:** [FastAPI](https://fastapi.tiangolo.com/) (Python 3.10+)
-- **Banco de Dados:** SQLite com [SQLAlchemy ORM](https://www.sqlalchemy.org/)
+- **Banco de Dados:** PostgreSQL com [SQLAlchemy ORM](https://www.sqlalchemy.org/)
 - **Frontend:** Jinja2 Templates, Bootstrap 5 e FontAwesome
 - **Autenticação:** JWT (JSON Web Tokens) com Cookies seguros
 - **Containerização:** Docker e Docker Compose
@@ -50,7 +50,7 @@ Sistema para controle de movimentação e rastreabilidade de arquivos e processo
    ```env
    SECRET_KEY=sua-chave-secreta-aqui
    ALGORITHM=HS256
-   DATABASE_URL=sqlite:///./data/processos.db
+   DATABASE_URL=postgresql://postgres:postgres@db:5432/sistemadocuab
    ```
 
 4. **Crie o usuário administrador inicial:**
@@ -83,7 +83,7 @@ O sistema estará disponível em `http://localhost:8001`.
 │   ├── routers/     # Controladores e rotas da API/Web
 │   ├── static/      # Arquivos estáticos (CSS, JS, Imagens)
 │   └── templates/   # Páginas HTML (Jinja2)
-├── data/            # Banco de dados SQLite (persistente)
+├── data/            # Local para backups ou logs (não mais usado para SQLite)
 ├── Dockerfile       # Receita da imagem Docker
 ├── docker-compose.yml
 └── seed_admin.py    # Script de criação do admin inicial

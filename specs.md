@@ -8,7 +8,7 @@
 
 `/app/database/session.py`
 - ação: criar
-- descrição: Configura a conexão com o banco de dados SQLite utilizando o SQLAlchemy, lendo a URL do banco a partir das variáveis de ambiente e disponibilizando um gerador de sessões para injeção de dependência.
+- descrição: Configura a conexão com o banco de dados PostgreSQL utilizando o SQLAlchemy, lendo a URL do banco a partir das variáveis de ambiente e disponibilizando um gerador de sessões para injeção de dependência.
 - pseudocódigo:
     ```text
     IMPORTAR sqlalchemy, sessionmaker
@@ -340,7 +340,7 @@
 
 `/docker-compose.yml`
 - ação: criar
-- descrição: Orquestra a execução da aplicação, mapeando a porta externa para a porta do contêiner e estabelecendo um volume persistente para que o banco de dados SQLite não seja perdido quando o contêiner for reiniciado ou destruído.
+- descrição: Orquestra a execução da aplicação, definindo o serviço de banco de dados PostgreSQL e o serviço web, mapeando a porta externa para a porta do contêiner e estabelecendo volumes persistentes para os dados do banco.
 - pseudocódigo:
     ```yaml
     VERSAO: '3.8'

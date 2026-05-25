@@ -3,7 +3,9 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from typing import Optional
 from app.database.session import get_db
-from app.services import processo_service
+from app.services import processo_service, auth_service
+from app.models.usuario import Usuario
+from fastapi.responses import RedirectResponse
 import logging
 
 router = APIRouter(prefix="/processos")
@@ -14,8 +16,12 @@ async def web_listar_processos(
     request: Request, 
     busca: Optional[str] = None, 
     status: Optional[str] = None, 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(auth_service.get_current_user)
 ):
+    if not current_user:
+        return RedirectResponse(url="/login")
+    
     try:
         processos_encontrados = processo_service.buscar_processos_com_filtros(db, busca, status)
         
@@ -33,6 +39,7 @@ async def web_listar_processos(
                 "lista_processos": processos_encontrados,
                 "busca_atual": busca,
                 "status_atual": status,
+                "usuario_logado": current_user,
                 "stats": {
                     "total": total_processos,
                     "disponiveis": processos_disponiveis,
@@ -43,14 +50,18 @@ async def web_listar_processos(
         )
     except Exception as e:
         logging.error(f"Erro ao listar processos: {e}")
-        return templates.TemplateResponse(request=request, name="500.html")
+        return templates.TemplateResponse(request=request, name="500.html", context={"usuario_logado": current_user})
 
 @router.get("/{processo_id}/historico")
 async def web_historico_processo(
     request: Request, 
     processo_id: int, 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(auth_service.get_current_user)
 ):
+    if not current_user:
+        return RedirectResponse(url="/login")
+    
     try:
         dados_historico = processo_service.consultar_historico_processo(db, processo_id)
         
@@ -60,30 +71,53 @@ async def web_historico_processo(
             context={
                 "processo": dados_historico["processo"],
                 "movimentacoes": dados_historico["historico"],
-                "total": dados_historico["total_movimentacoes"]
+                "total": dados_historico["total_movimentacoes"],
+                "usuario_logado": current_user
             }
         )
     except Exception as e:
         logging.error(f"Erro ao consultar histórico: {e}")
-        return templates.TemplateResponse(request=request, name="404.html", context={"mensagem": str(e)})
+        return templates.TemplateResponse(request=request, name="404.html", context={"mensagem": str(e), "usuario_logado": current_user})
 
 @router.get("/cadastrar")
-async def web_form_cadastrar_processo(request: Request):
+async def web_form_cadastrar_processo(
+    request: Request,
+    current_user: Usuario = Depends(auth_service.get_current_user)
+):
+    if not current_user:
+        return RedirectResponse(url="/login")
+        
     return templates.TemplateResponse(
         request=request,
-        name="processos/cadastrar.html"
+        name="processos/cadastrar.html",
+        context={"usuario_logado": current_user}
     )
 
 @router.get("/retirada")
-async def web_form_retirada(request: Request, processo_id: Optional[int] = None):
+async def web_form_retirada(
+    request: Request, 
+    processo_id: Optional[int] = None,
+    current_user: Usuario = Depends(auth_service.get_current_user)
+):
+    if not current_user:
+        return RedirectResponse(url="/login")
+        
     return templates.TemplateResponse(
         request=request,
         name="processos/retirada.html",
-        context={"processo_id": processo_id}
+        context={"processo_id": processo_id, "usuario_logado": current_user}
     )
 
 @router.get("/devolucao")
-async def web_form_devolucao(request: Request, processo_id: Optional[int] = None, db: Session = Depends(get_db)):
+async def web_form_devolucao(
+    request: Request, 
+    processo_id: Optional[int] = None, 
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(auth_service.get_current_user)
+):
+    if not current_user:
+        return RedirectResponse(url="/login")
+        
     movimentacao_id = None
     if processo_id:
         # Tentar encontrar a movimentação ativa para este processo
@@ -98,7 +132,7 @@ async def web_form_devolucao(request: Request, processo_id: Optional[int] = None
     return templates.TemplateResponse(
         request=request,
         name="processos/devolucao.html",
-        context={"processo_id": processo_id, "movimentacao_id": movimentacao_id}
+        context={"processo_id": processo_id, "movimentacao_id": movimentacao_id, "usuario_logado": current_user}
     )
 
 @router.get("/retirar/{processo_id}")

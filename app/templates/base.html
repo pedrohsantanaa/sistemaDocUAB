@@ -41,12 +41,20 @@
                     <span>Devolução</span>
                 </a>
             </li>
+            {% if usuario_logado and usuario_logado.cargo == 'admin' %}
+            <li class="nav-item">
+                <a class="nav-link" href="/usuarios">
+                    <i class="fas fa-users"></i>
+                    <span>Usuários</span>
+                </a>
+            </li>
             <li class="nav-item">
                 <a class="nav-link" href="/relatorios">
                     <i class="fas fa-chart-bar"></i>
                     <span>Relatórios</span>
                 </a>
             </li>
+            {% endif %}
         </ul>
     </div>
 
@@ -56,13 +64,21 @@
             <h5 class="mb-0">{{ titulo_pagina | default('Dashboard') }}</h5>
         </div>
         <div class="user-actions d-flex align-items-center gap-3">
-            <div class="notifications text-muted">
-                <i class="fas fa-bell"></i>
+            {% if usuario_logado %}
+            <div class="user-info dropdown">
+                <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <span class="me-2 text-dark">{{ usuario_logado.nome }}</span>
+                    <img src="https://ui-avatars.com/api/?name={{ usuario_logado.nome }}&background=1A237E&color=fff" alt="User" class="rounded-circle" width="32">
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow">
+                    <li><span class="dropdown-item-text text-muted small">{{ usuario_logado.cargo | capitalize }}</span></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item text-danger" href="/logout"><i class="fas fa-sign-out-alt me-2"></i>Sair</a></li>
+                </ul>
             </div>
-            <div class="user-info">
-                <span>Admin</span>
-                <img src="https://ui-avatars.com/api/?name=Admin&background=1A237E&color=fff" alt="User" class="rounded-circle" width="32">
-            </div>
+            {% else %}
+            <a href="/login" class="btn btn-outline-primary btn-sm btn-rounded">Entrar</a>
+            {% endif %}
         </div>
     </div>
 

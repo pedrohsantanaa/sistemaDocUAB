@@ -8,7 +8,8 @@ from app.schemas.movimentacao_schema import MovimentacaoCriar, MovimentacaoDevol
 import logging
 
 from app.schemas.processo_schema import ProcessoCriar
-from app.services import processo_service
+from app.services import processo_service, auth_service
+from app.models.usuario import Usuario
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -22,8 +23,12 @@ async def web_cadastrar_processo(
     tipo_processo: str = Form(...),
     setor_responsavel: str = Form(...),
     status: str = Form("Disponível"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(auth_service.get_current_user)
 ):
+    if not current_user:
+        return RedirectResponse(url="/login")
+    
     try:
         dados = ProcessoCriar(
             nome_cliente=nome_cliente,
@@ -40,22 +45,25 @@ async def web_cadastrar_processo(
         return templates.TemplateResponse(
             request=request, 
             name="processos/cadastrar.html", 
-            context={"erro": str(e)}
+            context={"erro": str(e), "usuario_logado": current_user}
         )
 
 @router.post("/processos/movimentar/retirada")
 async def web_retirar_processo(
     request: Request,
     processo_id: int = Form(...),
-    usuario_id: int = Form(...),
     setor_destino: str = Form(...),
     observacoes: str = Form(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(auth_service.get_current_user)
 ):
+    if not current_user:
+        return RedirectResponse(url="/login")
+    
     try:
         mov_dados = MovimentacaoCriar(
             processo_id=processo_id,
-            usuario_id=usuario_id,
+            usuario_id=current_user.id,
             setor_destino=setor_destino,
             observacoes=observacoes
         )
@@ -68,7 +76,7 @@ async def web_retirar_processo(
         return templates.TemplateResponse(
             request=request, 
             name="processos/retirada.html", 
-            context={"erro": str(e), "processo_id": processo_id}
+            context={"erro": str(e), "processo_id": processo_id, "usuario_logado": current_user}
         )
 
 @router.post("/processos/movimentar/devolucao")
@@ -76,8 +84,12 @@ async def web_devolver_processo(
     request: Request,
     movimentacao_id: int = Form(...),
     novo_status: str = Form(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(auth_service.get_current_user)
 ):
+    if not current_user:
+        return RedirectResponse(url="/login")
+        
     try:
         dados = MovimentacaoDevolucao(
             movimentacao_id=movimentacao_id,
@@ -92,11 +104,20 @@ async def web_devolver_processo(
         return templates.TemplateResponse(
             request=request, 
             name="processos/devolucao.html", 
-            context={"erro": str(e), "movimentacao_id": movimentacao_id}
+            context={"erro": str(e), "movimentacao_id": movimentacao_id, "usuario_logado": current_user}
         )
 
 @router.get("/relatorios")
-async def web_relatorios(request: Request, db: Session = Depends(get_db)):
+async def web_relatorios(
+    request: Request, 
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(auth_service.get_current_user)
+):
+    if not current_user:
+        return RedirectResponse(url="/login")
+    
+    auth_service.is_admin(current_user)
+    
     try:
         from app.models.processo import Processo
         from app.models.movimentacao import Movimentacao
@@ -136,6 +157,7 @@ async def web_relatorios(request: Request, db: Session = Depends(get_db)):
                 "status_data": status_data,
                 "labels_days": labels_days,
                 "movements_data": movements_by_day,
+                "usuario_logado": current_user,
                 "stats": {
                     "total": total,
                     "em_posse": em_posse,
@@ -147,5 +169,5 @@ async def web_relatorios(request: Request, db: Session = Depends(get_db)):
         )
     except Exception as e:
         logging.error(f"Erro ao carregar relatórios: {e}")
-        return templates.TemplateResponse(request=request, name="500.html")
+        return templates.TemplateResponse(request=request, name="500.html", context={"usuario_logado": current_user})
 

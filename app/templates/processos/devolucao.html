@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% set titulo_pagina = "Registrar Devolução" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        {% if erro %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            {{ erro }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center mb-4">
+                    <div class="stats-icon bg-success-light me-3">
+                        <i class="fas fa-file-import text-success"></i>
+                    </div>
+                    <h5 class="card-title mb-0">Encerramento de Movimentação</h5>
+                </div>
+                
+                <form action="/processos/movimentar/devolucao" method="POST">
+                    <div class="mb-4">
+                        <label for="movimentacao_id" class="form-label text-muted">ID da Movimentação Ativa</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0">
+                                <i class="fas fa-key text-muted"></i>
+                            </span>
+                            <input type="number" class="form-control border-start-0" id="movimentacao_id" name="movimentacao_id" value="{{ movimentacao_id or '' }}" placeholder="Ex: 102" required>
+                        </div>
+                        <div class="form-text mt-2"><i class="fas fa-info-circle me-1"></i> Informe o código da movimentação que está sendo finalizada.</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="novo_status" class="form-label text-muted">Destino Final do Processo</label>
+                        <select class="form-select" id="novo_status" name="novo_status" required>
+                            <option value="Disponível">Disponível para nova retirada</option>
+                            <option value="Liquidado">Liquidado / Finalizado</option>
+                            <option value="Arquivado">Arquivado definitivamente</option>
+                        </select>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <a href="/processos" class="btn btn-outline-secondary btn-rounded">Voltar</a>
+                        <button type="submit" class="btn btn-success btn-rounded px-4">
+                            <i class="fas fa-check-double me-2"></i>Finalizar Devolução
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

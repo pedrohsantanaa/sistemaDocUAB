@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Summary Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card mb-0">
+            <div class="card-body stats-card">
+                <div class="stats-icon bg-info-light">
+                    <i class="fas fa-folder text-primary"></i>
+                </div>
+                <div class="stats-data">
+                    <div class="number">{{ stats.total }}</div>
+                    <div class="label">Total Processos</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card mb-0">
+            <div class="card-body stats-card">
+                <div class="stats-icon bg-success-light">
+                    <i class="fas fa-check text-success"></i>
+                </div>
+                <div class="stats-data">
+                    <div class="number">{{ stats.disponiveis }}</div>
+                    <div class="label">Disponíveis</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card mb-0">
+            <div class="card-body stats-card">
+                <div class="stats-icon bg-warning-light">
+                    <i class="fas fa-hand-holding text-warning"></i>
+                </div>
+                <div class="stats-data">
+                    <div class="number">{{ stats.em_posse }}</div>
+                    <div class="label">Em Posse</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card mb-0">
+            <div class="card-body stats-card">
+                <div class="stats-icon bg-danger-light">
+                    <i class="fas fa-exclamation-triangle text-danger"></i>
+                </div>
+                <div class="stats-data">
+                    <div class="number">{{ stats.pendentes }}</div>
+                    <div class="label">Pendentes</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters & Search -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title mb-0">Lista de Processos</h5>
+            <a href="/processos/cadastrar" class="btn btn-primary btn-rounded">
+                <i class="fas fa-plus me-2"></i>Novo Processo
+            </a>
+        </div>
+        <form method="GET" action="/processos" class="row g-3">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                    <input type="text" name="busca" class="form-control border-start-0" placeholder="Pesquisar por nome, CPF ou contrato..." value="{{ busca_atual or '' }}">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <select name="status" class="form-select">
+                    <option value="Todos" {% if status_atual == 'Todos' %}selected{% endif %}>Todos os Status</option>
+                    <option value="Disponível" {% if status_atual == 'Disponível' %}selected{% endif %}>Disponível</option>
+                    <option value="Em Posse" {% if status_atual == 'Em Posse' %}selected{% endif %}>Em Posse</option>
+                    <option value="Pendente" {% if status_atual == 'Pendente' %}selected{% endif %}>Pendente</option>
+                    <option value="Liquidado" {% if status_atual == 'Liquidado' %}selected{% endif %}>Liquidado</option>
+                    <option value="Arquivado" {% if status_atual == 'Arquivado' %}selected{% endif %}>Arquivado</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-outline-secondary w-100 btn-rounded">Filtrar Resultados</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Data Table -->
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Contrato</th>
+                        <th>Cliente</th>
+                        <th>CPF/CNPJ</th>
+                        <th>Status</th>
+                        <th>Setor</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for processo in lista_processos %}
+                    <tr>
+                        <td class="fw-bold">{{ processo.numero_contrato }}</td>
+                        <td>{{ processo.nome_cliente }}</td>
+                        <td>{{ processo.cpf_cnpj }}</td>
+                        <td>
+                            {% if processo.status == 'Disponível' %}
+                                <span class="badge-pill bg-success-light">Disponível</span>
+                            {% elif processo.status == 'Em Posse' %}
+                                <span class="badge-pill bg-warning-light">Em Posse</span>
+                            {% elif processo.status == 'Pendente' %}
+                                <span class="badge-pill bg-danger-light">Pendente</span>
+                            {% elif processo.status == 'Liquidado' %}
+                                <span class="badge-pill bg-info-light">Liquidado</span>
+                            {% else %}
+                                <span class="badge-pill bg-light text-dark">{{ processo.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ processo.setor_responsavel }}</td>
+                        <td class="text-end">
+                            <div class="dropdown">
+                                <button class="btn btn-light btn-sm rounded-circle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="/processos/{{ processo.id }}/historico"><i class="fas fa-history me-2"></i>Histórico</a></li>
+                                    {% if processo.status == 'Disponível' %}
+                                        <li><a class="dropdown-item text-primary" href="/processos/retirar/{{ processo.id }}"><i class="fas fa-file-export me-2"></i>Registrar Retirada</a></li>
+                                    {% elif processo.status == 'Em Posse' %}
+                                        <li><a class="dropdown-item text-warning" href="/processos/devolver/{{ processo.id }}"><i class="fas fa-file-import me-2"></i>Registrar Devolução</a></li>
+                                    {% endif %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>Excluir</a></li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5">
+                            <img src="https://cdn-icons-png.flaticon.com/512/7486/7486744.png" width="64" class="opacity-25 mb-3" alt="Empty">
+                            <p class="text-muted">Nenhum processo encontrado com os filtros atuais.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

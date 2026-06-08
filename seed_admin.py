@@ -1,8 +1,5 @@
-from app.database.session import SessionLocal
-from app.models.usuario import Usuario
-from app.models.movimentacao import Movimentacao
-from app.models.processo import Processo
-from app.models.status_processo import StatusProcesso
+from app.database.session import SessionLocal, engine, Base
+from app.models import Usuario, StatusProcesso, Processo, Movimentacao, LogAuditoria, Setor, TipoProcesso
 from app.services.auth_service import get_password_hash
 
 def seed_status(db):
@@ -13,17 +10,19 @@ def seed_status(db):
             novo_status = StatusProcesso(nome=nome)
             db.add(novo_status)
             print(f"Status criado: {nome}")
-    db.commit()
+        db.commit()
 
-def seed_admin():
+        def seed_admin():
+            # Garantir que as tabelas existam
+            Base.metadata.create_all(bind=engine)
+
     db = SessionLocal()
     try:
         # Criar status iniciais primeiro
         seed_status(db)
 
         admin_exists = db.query(Usuario).filter(Usuario.email == "admin@docuab.com").first()
-...
-
+        if not admin_exists:
             admin = Usuario(
                 nome="Administrador",
                 email="admin@docuab.com",

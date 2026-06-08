@@ -20,7 +20,8 @@ async def get_relatorios(
     
     try:
         # 1. Status Distribution
-        status_counts = db.query(Processo.status, func.count(Processo.id)).group_by(Processo.status).all()
+        from app.models.status_processo import StatusProcesso
+        status_counts = db.query(StatusProcesso.nome, func.count(Processo.id)).join(Processo, Processo.status_id == StatusProcesso.id).group_by(StatusProcesso.nome).all()
         status_data = {s[0]: s[1] for s in status_counts}
 
         # 2. Movements last 7 days
@@ -38,9 +39,13 @@ async def get_relatorios(
 
         # 3. KPI Metrics
         total = db.query(Processo).count()
-        em_posse = db.query(Processo).filter(Processo.status == "Em Posse").count()
-        disponivel = db.query(Processo).filter(Processo.status == "Disponível").count()
-        pendente = db.query(Processo).filter(Processo.status == "Pendente").count()
+        
+        def get_count_by_status(nome):
+            return db.query(Processo).join(StatusProcesso).filter(StatusProcesso.nome == nome).count()
+
+        em_posse = get_count_by_status("Em Posse")
+        disponivel = get_count_by_status("Disponível")
+        pendente = get_count_by_status("Pendente")
 
         # 4. Recent Movements
         recent_movs = db.query(Movimentacao).order_by(Movimentacao.data_retirada.desc()).limit(10).all()

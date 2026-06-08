@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from app.database.session import get_db
 from app.services import auth_service
-from app.schemas.usuario_schema import UsuarioCriar, Usuario as UsuarioSchema
+from app.schemas.usuario_schema import UsuarioCriar, UsuarioEditar, Usuario as UsuarioSchema
 from app.models.usuario import Usuario
 import logging
 
@@ -30,4 +30,19 @@ async def cadastrar_usuario(
         return novo_usuario
     except Exception as e:
         logging.error(f"Erro ao cadastrar usuário: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.put("/{usuario_id}", response_model=UsuarioSchema)
+async def editar_usuario(
+    usuario_id: int,
+    dados: UsuarioEditar,
+    db: Session = Depends(get_db),
+    current_user: Usuario = Depends(auth_service.get_current_user)
+):
+    auth_service.is_admin(current_user)
+    try:
+        usuario_atualizado = auth_service.atualizar_usuario(db, usuario_id, dados)
+        return usuario_atualizado
+    except Exception as e:
+        logging.error(f"Erro ao editar usuário {usuario_id}: {e}")
         raise HTTPException(status_code=400, detail=str(e))

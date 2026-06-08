@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 import api from '../api'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
@@ -10,6 +11,7 @@ import Textarea from 'primevue/textarea'
 import DatePicker from 'primevue/datepicker'
 
 const router = useRouter()
+const authStore = useAuthStore()
 const loading = ref(false)
 const error = ref('')
 const tipos = ref([])
@@ -21,7 +23,7 @@ const form = ref({
   cpf_cnpj: '',
   numero_contrato: '',
   tipo_processo: '',
-  setor_responsavel: '',
+  setor_responsavel: authStore.user?.setor || '',
   status_id: null,
   data_entrada: new Date(),
   observacao: ''
@@ -38,6 +40,11 @@ const fetchConfig = async () => {
     setores.value = setoresRes.data
     statusOpcoes.value = statusRes.data
     
+    // Se não for admin, garante que o setor do formulário é o setor do usuário
+    if (!authStore.isAdmin && authStore.user?.setor) {
+      form.value.setor_responsavel = authStore.user.setor
+    }
+
     // Tenta selecionar "Disponível" como padrão
     const statusPadrao = statusRes.data.find(s => s.nome === 'Disponível')
     if (statusPadrao) {
@@ -98,7 +105,7 @@ onMounted(fetchConfig)
 
         <div class="flex flex-col gap-2">
           <label for="setor_responsavel" class="font-semibold">Setor Responsável</label>
-          <Select id="setor_responsavel" v-model="form.setor_responsavel" :options="setores" optionLabel="nome" optionValue="nome" placeholder="Selecione..." required />
+          <Select id="setor_responsavel" v-model="form.setor_responsavel" :options="setores" optionLabel="nome" optionValue="nome" placeholder="Selecione..." :disabled="!authStore.isAdmin" required />
         </div>
 
         <div class="flex flex-col gap-2">

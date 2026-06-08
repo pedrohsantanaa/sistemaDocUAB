@@ -10,14 +10,17 @@ import Dialog from 'primevue/dialog'
 import Select from 'primevue/select'
 import Textarea from 'primevue/textarea'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 
 const processos = ref([])
 const stats = ref({})
 const loading = ref(true)
 const busca = ref('')
 const statusFiltro = ref(null)
+const setorFiltro = ref(null)
 const statusOpcoes = ref([])
 const router = useRouter()
+const authStore = useAuthStore()
 
 // Modals State
 const showRetiradaDialog = ref(false)
@@ -41,6 +44,7 @@ const fetchProcessos = async () => {
     const params = {}
     if (busca.value) params.busca = busca.value
     if (statusFiltro.value) params.status = statusFiltro.value
+    if (setorFiltro.value) params.setor = setorFiltro.value
     
     const response = await api.get('/processos/', { params })
     processos.value = response.data.processos
@@ -206,7 +210,8 @@ onMounted(() => {
           <InputText v-model="busca" placeholder="Buscar por cliente, contrato ou CPF..." class="pl-12 w-full border-gray-200" @keyup.enter="fetchProcessos" />
         </div>
         <div class="flex gap-2 w-full md:w-auto">
-          <Select v-model="statusFiltro" :options="statusOpcoes" optionLabel="label" optionValue="value" placeholder="Filtrar por Status" showClear class="w-full md:w-48" @change="fetchProcessos" />
+          <Select v-if="authStore.isAdmin" v-model="setorFiltro" :options="setores" optionLabel="nome" optionValue="nome" placeholder="Setor" showClear class="w-full md:w-40" @change="fetchProcessos" />
+          <Select v-model="statusFiltro" :options="statusOpcoes" optionLabel="label" optionValue="value" placeholder="Status" showClear class="w-full md:w-40" @change="fetchProcessos" />
           <Button label="Buscar" icon="pi pi-search" class="px-6" @click="fetchProcessos" />
         </div>
       </div>

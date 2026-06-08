@@ -8,17 +8,29 @@ from app.models.processo import Processo
 from app.models.movimentacao import Movimentacao
 from app.schemas.processo_schema import ProcessoCriar
 
-def criar_processo(db: Session, dados: ProcessoCriar):
+def criar_processo(db: Session, dados: ProcessoCriar, usuario_atual=None):
     """
     Cria um novo registro de processo no banco de dados.
     Utiliza o esquema ProcessoCriar para validar os dados de entrada.
     """
+    setor = dados.setor_responsavel
+    
+    # Se o usuário não for admin, o setor é obrigatoriamente o dele
+    if usuario_atual and usuario_atual.cargo != "admin":
+        setor = usuario_atual.setor
+        
+    if not setor:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="Setor responsável não definido para este usuário."
+        )
+
     novo_processo = Processo(
         nome_cliente=dados.nome_cliente,
         cpf_cnpj=dados.cpf_cnpj,
         numero_contrato=dados.numero_contrato,
         tipo_processo=dados.tipo_processo,
-        setor_responsavel=dados.setor_responsavel,
+        setor_responsavel=setor,
         status_id=dados.status_id,
         data_entrada=dados.data_entrada,
         observacao=dados.observacao
@@ -31,7 +43,6 @@ def criar_processo(db: Session, dados: ProcessoCriar):
         return novo_processo
     except Exception as e:
         db.rollback()
-        # Em produção, registraríamos o erro real em um log (logger.error(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             detail="Não foi possível cadastrar o processo no momento."
@@ -60,11 +71,17 @@ def consultar_historico_processo(db: Session, id_processo: int):
         "historico": historico
     }
 
-def buscar_processos_com_filtros(db: Session, busca: str = None, status: str = None):
+def buscar_processos_com_filtros(db: Session, busca: str = None, status: str = None, setor: str = None, usuario_atual=None):
     """
     Realiza busca filtrada de processos por texto (cliente, contrato, cpf) ou por status.
     """
     query = db.query(Processo)
+    
+    # Se o usuário não for admin, ele só vê processos do seu setor
+    if usuario_atual and usuario_atual.cargo != "admin":
+        query = query.filter(Processo.setor_responsavel == usuario_atual.setor)
+    elif setor and setor != "Todos":
+        query = query.filter(Processo.setor_responsavel == setor)
     
     if busca:
         # Aplica filtro OR em múltiplos campos para facilitar a busca do usuário
@@ -82,4 +99,4 @@ def buscar_processos_com_filtros(db: Session, busca: str = None, status: str = N
             from app.models.status_processo import StatusProcesso
             query = query.join(StatusProcesso).filter(StatusProcesso.nome == status)
         
-    return query.all()
+    return query.order_by(Processo.data_entrada.desc()).all()

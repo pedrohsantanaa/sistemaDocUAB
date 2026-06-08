@@ -5,6 +5,7 @@ class UsuarioBase(BaseModel):
     nome: str
     email: EmailStr
     cargo: str = "usuario"
+    setor: Optional[str] = None
     ativo: bool = True
 
 class UsuarioCriar(UsuarioBase):
@@ -19,3 +20,11 @@ class Usuario(UsuarioBase):
 
     class Config:
         from_attributes = True
+
+class UsuarioEditar(BaseModel):
+    nome: Optional[str] = None
+    email: Optional[EmailStr] = None
+    cargo: Optional[str] = None
+    setor: Optional[str] = None
+    ativo: Optional[bool] = None
+    senha: Optional[str] = None

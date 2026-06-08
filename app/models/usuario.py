@@ -10,6 +10,7 @@ class Usuario(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     senha_hash = Column(String, nullable=False)
     cargo = Column(String, default="usuario") # 'admin' ou 'usuario'
+    setor = Column(String, nullable=True)
     ativo = Column(Boolean, default=True)
 
     movimentacoes = relationship("Movimentacao", back_populates="usuario")

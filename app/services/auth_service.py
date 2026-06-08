@@ -9,7 +9,7 @@ from app.database.session import get_db
 from app.models.log import LogAuditoria
 from dotenv import load_dotenv
 
-from app.schemas.usuario_schema import UsuarioCriar
+from app.schemas.usuario_schema import UsuarioCriar, UsuarioEditar
 
 load_dotenv()
 
@@ -38,12 +38,39 @@ def criar_usuario(db: Session, usuario: UsuarioCriar):
         email=usuario.email,
         senha_hash=get_password_hash(usuario.senha),
         cargo=usuario.cargo,
+        setor=usuario.setor,
         ativo=usuario.ativo
     )
     db.add(db_usuario)
     db.commit()
     db.refresh(db_usuario)
     return db_usuario
+
+def atualizar_usuario(db: Session, usuario_id: int, dados: UsuarioEditar):
+    db_usuario = db.query(Usuario).filter(Usuario.id == usuario_id).first()
+    if not db_usuario:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    if dados.nome is not None:
+        db_usuario.nome = dados.nome
+    if dados.email is not None:
+        db_usuario.email = dados.email
+    if dados.cargo is not None:
+        db_usuario.cargo = dados.cargo
+    if dados.setor is not None:
+        db_usuario.setor = dados.setor
+    if dados.ativo is not None:
+        db_usuario.ativo = dados.ativo
+    if dados.senha is not None and dados.senha.strip() != "":
+        db_usuario.senha_hash = get_password_hash(dados.senha)
+    
+    try:
+        db.commit()
+        db.refresh(db_usuario)
+        return db_usuario
+    except Exception as e:
+        db.rollback()
+        raise e
 
 def autenticar_usuario(db: Session, email: str, senha_plana: str):
     usuario = db.query(Usuario).filter(Usuario.email == email).first()
@@ -77,17 +104,31 @@ def get_current_user(request: Request, db: Session = Depends(get_db)):
                 token = token_cookie
 
     if not token:
-        return None
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Não autenticado"
+        )
     
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
-            return None
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token inválido"
+            )
     except JWTError:
-        return None
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token expirado ou inválido"
+        )
         
     usuario = db.query(Usuario).filter(Usuario.email == email).first()
+    if not usuario:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Usuário não encontrado"
+        )
     return usuario
 
 def is_admin(usuario: Usuario):

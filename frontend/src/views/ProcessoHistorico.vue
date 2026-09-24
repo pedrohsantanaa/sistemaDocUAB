@@ -43,17 +43,17 @@ onMounted(fetchHistorico)
       <!-- Process Info Card -->
       <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
-          <p class="text-xs text-gray-500 uppercase font-bold mb-1">Cliente</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold mb-1">Cliente</p>
           <p class="font-semibold">{{ processo.nome_cliente }}</p>
-          <p class="text-sm text-gray-600">{{ processo.cpf_cnpj }}</p>
+          <p class="text-sm text-gray-600 dark:text-gray-300">{{ processo.cpf_cnpj }}</p>
         </div>
         <div>
-          <p class="text-xs text-gray-500 uppercase font-bold mb-1">Contrato</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold mb-1">Contrato</p>
           <p class="font-semibold">{{ processo.numero_contrato }}</p>
-          <p class="text-sm text-gray-600">{{ processo.tipo_processo }}</p>
+          <p class="text-sm text-gray-600 dark:text-gray-300">{{ processo.tipo_processo }}</p>
         </div>
         <div>
-          <p class="text-xs text-gray-500 uppercase font-bold mb-1">Status Atual</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold mb-1">Status Atual</p>
           <Tag :value="processo.status" :severity="processo.status === 'Disponível' ? 'success' : 'warn'" />
         </div>
       </div>
@@ -80,7 +80,7 @@ onMounted(fetchHistorico)
                   <p><strong>Destino:</strong> {{ slotProps.item.setor_destino }}</p>
                   <p><strong>Usuário:</strong> {{ slotProps.item.usuario_nome }}</p>
                   <p v-if="slotProps.item.observacoes"><strong>Obs:</strong> {{ slotProps.item.observacoes }}</p>
-                  <p v-if="slotProps.item.data_devolucao" class="text-green-600 font-semibold">
+                  <p v-if="slotProps.item.data_devolucao" class="text-green-600 dark:text-green-400 font-semibold">
                     Devolvido em: {{ new Date(slotProps.item.data_devolucao).toLocaleDateString() }}
                   </p>
                 </div>

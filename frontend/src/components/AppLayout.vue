@@ -2,10 +2,12 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useThemeStore } from '../stores/theme'
 import Button from 'primevue/button'
 import logoUrl from '../assets/logo.png'
 
 const auth = useAuthStore()
+const theme = useThemeStore()
 const router = useRouter()
 
 const menuItems = [
@@ -54,21 +56,30 @@ const handleLogout = () => {
     <!-- Main Content Wrapper -->
     <div class="flex-1 ml-[280px] flex flex-col min-h-screen">
       <!-- Topbar -->
-      <header class="h-[70px] bg-white shadow-sm flex items-center justify-between px-8 sticky top-0 z-[999] border-b border-gray-100">
+      <header class="h-[70px] bg-white dark:bg-gray-900 shadow-sm flex items-center justify-between px-8 sticky top-0 z-[999] border-b border-gray-100 dark:border-gray-700">
         <div class="flex items-center gap-4">
           <div class="bg-accent-500 w-1.5 h-8 rounded-full"></div>
-          <div class="text-primary-900 font-bold uppercase tracking-tight text-lg">
+          <div class="text-primary-900 dark:text-primary-300 font-bold uppercase tracking-tight text-lg">
             Agência de Fomento do Tocantins
           </div>
         </div>
         <div class="flex items-center gap-4">
           <div class="text-right">
-            <p class="text-sm font-bold text-gray-800">{{ auth.user?.nome }}</p>
-            <p class="text-xs text-primary-600 font-bold uppercase">{{ auth.user?.cargo }}</p>
+            <p class="text-sm font-bold text-gray-800 dark:text-gray-100">{{ auth.user?.nome }}</p>
+            <p class="text-xs text-primary-600 dark:text-primary-300 font-bold uppercase">{{ auth.user?.cargo }}</p>
           </div>
-          <div class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-900 font-bold border border-primary-200">
+          <div class="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-800 flex items-center justify-center text-primary-900 dark:text-white font-bold border border-primary-200 dark:border-primary-600">
             {{ auth.user?.nome?.charAt(0) }}
           </div>
+          <Button
+            :icon="theme.isDark ? 'pi pi-sun' : 'pi pi-moon'"
+            severity="secondary"
+            text
+            rounded
+            :aria-label="theme.isDark ? 'Ativar modo claro' : 'Ativar modo escuro'"
+            :title="theme.isDark ? 'Modo claro' : 'Modo escuro'"
+            @click="theme.toggle()"
+          />
         </div>
       </header>
 

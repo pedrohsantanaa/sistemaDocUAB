@@ -5,6 +5,18 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gestão Documental - Fomento TO</title>
+    <script>
+      // Aplica o tema antes do primeiro paint (evita flash claro no dark mode)
+      (function () {
+        try {
+          var t = localStorage.getItem('theme')
+          if (t !== 'dark' && t !== 'light') {
+            t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+          }
+          if (t === 'dark') document.documentElement.classList.add('my-app-dark')
+        } catch (e) { /* localStorage indisponível */ }
+      })()
+    </script>
   </head>
   <body>
     <div id="app"></div>

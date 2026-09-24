@@ -1,6 +1,7 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import api from '../api'
+import { useThemeStore } from '../stores/theme'
 import { Pie, Bar } from 'vue-chartjs'
 import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale, BarElement } from 'chart.js'
 import Card from 'primevue/card'
@@ -17,7 +18,38 @@ const chartDataStatus = ref({
 
 const chartDataMovements = ref({
   labels: [],
-  datasets: [{ label: 'Movimentações', data: [], backgroundColor: '#3b82f6' }]
+  datasets: [{ label: 'Movimenta����es', data: [], backgroundColor: '#3b82f6' }]
+})
+
+const theme = useThemeStore()
+
+const pieOptions = computed(() => {
+  const text = theme.isDark ? '#e5e7eb' : '#333333'
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { color: text } },
+      tooltip: { titleColor: text, bodyColor: text },
+    },
+  }
+})
+
+const barOptions = computed(() => {
+  const text = theme.isDark ? '#e5e7eb' : '#333333'
+  const grid = theme.isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)'
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { labels: { color: text } },
+      tooltip: { titleColor: text, bodyColor: text },
+    },
+    scales: {
+      x: { ticks: { color: text }, grid: { color: grid } },
+      y: { ticks: { color: text }, grid: { color: grid } },
+    },
+  }
 })
 
 const fetchReports = async () => {
@@ -56,19 +88,19 @@ onMounted(fetchReports)
       <!-- Top KPIs -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <template #title><span class="text-sm font-normal text-gray-500 uppercase">Total de Processos</span></template>
+          <template #title><span class="text-sm font-normal text-gray-500 dark:text-gray-400 uppercase">Total de Processos</span></template>
           <template #content><span class="text-3xl font-bold">{{ reportData.stats.total }}</span></template>
         </Card>
         <Card>
-          <template #title><span class="text-sm font-normal text-gray-500 uppercase">Em Posse</span></template>
+          <template #title><span class="text-sm font-normal text-gray-500 dark:text-gray-400 uppercase">Em Posse</span></template>
           <template #content><span class="text-3xl font-bold text-yellow-500">{{ reportData.stats.em_posse }}</span></template>
         </Card>
         <Card>
-          <template #title><span class="text-sm font-normal text-gray-500 uppercase">Disponíveis</span></template>
+          <template #title><span class="text-sm font-normal text-gray-500 dark:text-gray-400 uppercase">Disponíveis</span></template>
           <template #content><span class="text-3xl font-bold text-green-500">{{ reportData.stats.disponivel }}</span></template>
         </Card>
         <Card>
-          <template #title><span class="text-sm font-normal text-gray-500 uppercase">Pendentes</span></template>
+          <template #title><span class="text-sm font-normal text-gray-500 dark:text-gray-400 uppercase">Pendentes</span></template>
           <template #content><span class="text-3xl font-bold text-red-500">{{ reportData.stats.pendente }}</span></template>
         </Card>
       </div>
@@ -78,14 +110,14 @@ onMounted(fetchReports)
         <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <h3 class="text-lg font-semibold mb-4">Distribuição por Status</h3>
           <div class="h-64 flex justify-center">
-            <Pie :data="chartDataStatus" :options="{ responsive: true, maintainAspectRatio: false }" />
+            <Pie :data="chartDataStatus" :options="pieOptions" />
           </div>
         </div>
 
         <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
           <h3 class="text-lg font-semibold mb-4">Movimentações (Últimos 7 dias)</h3>
           <div class="h-64">
-            <Bar :data="chartDataMovements" :options="{ responsive: true, maintainAspectRatio: false }" />
+            <Bar :data="chartDataMovements" :options="barOptions" />
           </div>
         </div>
       </div>
@@ -110,7 +142,7 @@ onMounted(fetchReports)
                 <td class="py-3">{{ mov.cliente }}</td>
                 <td class="py-3">{{ mov.usuario }}</td>
                 <td class="py-3">{{ mov.setor_destino }}</td>
-                <td class="py-3 text-sm text-gray-500">
+                <td class="py-3 text-sm text-gray-500 dark:text-gray-400">
                   {{ new Date(mov.data_retirada).toLocaleDateString() }} {{ new Date(mov.data_retirada).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) }}
                 </td>
               </tr>

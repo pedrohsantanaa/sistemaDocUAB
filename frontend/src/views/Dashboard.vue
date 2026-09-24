@@ -130,12 +130,12 @@ const confirmarDevolucao = async () => {
 
 const getStatusClass = (status) => {
   switch (status) {
-    case 'Disponível': return 'bg-green-100 text-green-800'
-    case 'Em Posse': return 'bg-amber-100 text-amber-800'
-    case 'Pendente': return 'bg-red-100 text-red-800'
-    case 'Liquidado': return 'bg-blue-100 text-blue-800'
-    case 'Arquivado': return 'bg-gray-100 text-gray-800'
-    default: return 'bg-purple-100 text-purple-800'
+    case 'Disponível': return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300'
+    case 'Em Posse': return 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300'
+    case 'Pendente': return 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
+    case 'Liquidado': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300'
+    case 'Arquivado': return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+    default: return 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300'
   }
 }
 
@@ -163,51 +163,51 @@ onMounted(() => {
 
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-        <div class="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 text-xl">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-lg bg-blue-50 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-300 text-xl">
           <i class="pi pi-file"></i>
         </div>
         <div>
-          <p class="text-2xl font-bold text-gray-800">{{ stats.total || 0 }}</p>
-          <p class="text-xs text-gray-500 uppercase font-semibold">Total Geral</p>
+          <p class="text-2xl font-bold text-gray-800 dark:text-gray-100">{{ stats.total || 0 }}</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Total Geral</p>
         </div>
       </div>
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-        <div class="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center text-green-600 text-xl">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-lg bg-green-50 dark:bg-green-900/40 flex items-center justify-center text-green-600 dark:text-green-300 text-xl">
           <i class="pi pi-check-circle"></i>
         </div>
         <div>
-          <p class="text-2xl font-bold text-gray-800">{{ stats.disponiveis || 0 }}</p>
-          <p class="text-xs text-gray-500 uppercase font-semibold">Disponíveis</p>
+          <p class="text-2xl font-bold text-gray-800 dark:text-gray-100">{{ stats.disponiveis || 0 }}</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Disponíveis</p>
         </div>
       </div>
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-        <div class="w-12 h-12 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600 text-xl">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-lg bg-amber-50 dark:bg-amber-900/40 flex items-center justify-center text-amber-600 dark:text-amber-300 text-xl">
           <i class="pi pi-sign-out"></i>
         </div>
         <div>
-          <p class="text-2xl font-bold text-gray-800">{{ stats.em_posse || 0 }}</p>
-          <p class="text-xs text-gray-500 uppercase font-semibold">Em Posse</p>
+          <p class="text-2xl font-bold text-gray-800 dark:text-gray-100">{{ stats.em_posse || 0 }}</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Em Posse</p>
         </div>
       </div>
-      <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-        <div class="w-12 h-12 rounded-lg bg-red-50 flex items-center justify-center text-red-600 text-xl">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-lg bg-red-50 dark:bg-red-900/40 flex items-center justify-center text-red-600 dark:text-red-300 text-xl">
           <i class="pi pi-exclamation-circle"></i>
         </div>
         <div>
-          <p class="text-2xl font-bold text-gray-800">{{ stats.pendentes || 0 }}</p>
-          <p class="text-xs text-gray-500 uppercase font-semibold">Pendentes</p>
+          <p class="text-2xl font-bold text-gray-800 dark:text-gray-100">{{ stats.pendentes || 0 }}</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">Pendentes</p>
         </div>
       </div>
     </div>
 
     <!-- Main Content Card -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
       <!-- Search/Filter Header -->
-      <div class="p-6 border-b border-gray-50 flex flex-col md:flex-row gap-4 items-center bg-gray-50/50">
+      <div class="p-6 border-b border-gray-50 dark:border-gray-700 flex flex-col md:flex-row gap-4 items-center bg-gray-50/50 dark:bg-gray-900/50">
         <div class="relative flex-1 w-full">
-          <i class="pi pi-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 z-10" />
-          <InputText v-model="busca" placeholder="Buscar por cliente, contrato ou CPF..." class="pl-12 w-full border-gray-200" @keyup.enter="fetchProcessos" />
+          <i class="pi pi-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 z-10" />
+          <InputText v-model="busca" placeholder="Buscar por cliente, contrato ou CPF..." class="pl-12 w-full border-gray-200 dark:border-gray-600" @keyup.enter="fetchProcessos" />
         </div>
         <div class="flex gap-2 w-full md:w-auto">
           <Select v-if="authStore.isAdmin" v-model="setorFiltro" :options="setores" optionLabel="nome" optionValue="nome" placeholder="Setor" showClear class="w-full md:w-40" @change="fetchProcessos" />
@@ -218,7 +218,7 @@ onMounted(() => {
 
       <!-- Data Table -->
       <DataTable :value="processos" :loading="loading" paginator :rows="10" stripedRows class="p-datatable-sm">
-        <Column field="numero_contrato" header="Nº Contrato" sortable class="font-bold text-primary-900"></Column>
+        <Column field="numero_contrato" header="Nº Contrato" sortable class="font-bold text-primary-900 dark:text-primary-300"></Column>
         <Column field="nome_cliente" header="Cliente" sortable></Column>
         <Column field="tipo_processo" header="Tipo de Processo"></Column>
         <Column field="setor_responsavel" header="Setor Atual"></Column>
@@ -244,22 +244,22 @@ onMounted(() => {
     <!-- Modal Retirada -->
     <Dialog v-model:visible="showRetiradaDialog" header="Registrar Retirada de Processo" modal class="w-full max-w-md">
       <div class="space-y-4 pt-4">
-        <div class="p-4 bg-blue-50 rounded-lg border border-blue-100 mb-4">
-          <p class="text-sm font-bold text-blue-900">Processo: {{ selectedProcesso?.numero_contrato }}</p>
-          <p class="text-xs text-blue-700">{{ selectedProcesso?.nome_cliente }}</p>
+        <div class="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-100 dark:border-blue-800 mb-4">
+          <p class="text-sm font-bold text-blue-900 dark:text-blue-200">Processo: {{ selectedProcesso?.numero_contrato }}</p>
+          <p class="text-xs text-blue-700 dark:text-blue-300">{{ selectedProcesso?.nome_cliente }}</p>
         </div>
         
         <div class="flex flex-col gap-2">
-          <label class="font-semibold text-gray-700">Setor de Destino</label>
+          <label class="font-semibold text-gray-700 dark:text-gray-200">Setor de Destino</label>
           <Select v-model="formRetirada.setor_destino" :options="setores" optionLabel="nome" optionValue="nome" placeholder="Selecione o setor..." class="w-full" />
         </div>
 
         <div class="flex flex-col gap-2">
-          <label class="font-semibold text-gray-700">Observações (Opcional)</label>
-          <Textarea v-model="formRetirada.observacoes" rows="3" class="w-full border-gray-300" />
+          <label class="font-semibold text-gray-700 dark:text-gray-200">Observações (Opcional)</label>
+          <Textarea v-model="formRetirada.observacoes" rows="3" class="w-full border-gray-300 dark:border-gray-600" />
         </div>
 
-        <div class="flex justify-end gap-2 pt-4 border-t border-gray-100">
+        <div class="flex justify-end gap-2 pt-4 border-t border-gray-100 dark:border-gray-700">
           <Button label="Cancelar" text severity="secondary" @click="showRetiradaDialog = false" />
           <Button label="Confirmar Retirada" icon="pi pi-sign-out" :loading="submetendo" @click="confirmarRetirada" />
         </div>
@@ -269,17 +269,17 @@ onMounted(() => {
     <!-- Modal Devolução -->
     <Dialog v-model:visible="showDevolucaoDialog" header="Registrar Devolução de Processo" modal class="w-full max-w-md">
       <div class="space-y-4 pt-4">
-        <div class="p-4 bg-green-50 rounded-lg border border-green-100 mb-4">
-          <p class="text-sm font-bold text-green-900">Processo: {{ selectedProcesso?.numero_contrato }}</p>
-          <p class="text-xs text-green-700">{{ selectedProcesso?.nome_cliente }}</p>
+        <div class="p-4 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-100 dark:border-green-800 mb-4">
+          <p class="text-sm font-bold text-green-900 dark:text-green-200">Processo: {{ selectedProcesso?.numero_contrato }}</p>
+          <p class="text-xs text-green-700 dark:text-green-300">{{ selectedProcesso?.nome_cliente }}</p>
         </div>
 
         <div class="flex flex-col gap-2">
-          <label class="font-semibold text-gray-700">Novo Status do Processo</label>
+          <label class="font-semibold text-gray-700 dark:text-gray-200">Novo Status do Processo</label>
           <Select v-model="formDevolucao.novo_status_processo" :options="statusOpcoes" optionLabel="label" optionValue="value" class="w-full" />
         </div>
 
-        <div class="flex justify-end gap-2 pt-4 border-t border-gray-100">
+        <div class="flex justify-end gap-2 pt-4 border-t border-gray-100 dark:border-gray-700">
           <Button label="Cancelar" text severity="secondary" @click="showDevolucaoDialog = false" />
           <Button label="Confirmar Devolução" icon="pi pi-check" severity="success" :loading="submetendo" @click="confirmarDevolucao" />
         </div>

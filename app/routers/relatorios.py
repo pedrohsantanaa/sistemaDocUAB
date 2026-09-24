@@ -14,10 +14,8 @@ router = APIRouter(prefix="/api/relatorios", tags=["Relatórios"])
 @router.get("/")
 async def get_relatorios(
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(auth_service.get_current_user)
+    current_user: Usuario = Depends(auth_service.require_admin)
 ):
-    auth_service.is_admin(current_user)
-    
     try:
         # 1. Status Distribution
         from app.models.status_processo import StatusProcesso

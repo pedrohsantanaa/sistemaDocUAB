@@ -3,7 +3,8 @@ import httpx
 import os
 
 # Configurações para os testes
-BASE_URL = "http://localhost:8000" # URL interna dentro do container
+# 127.0.0.1 evita que 'localhost' resolva para IPv6/outros serviços na porta 8000
+BASE_URL = "http://127.0.0.1:8000"
 API_URL = f"{BASE_URL}/api"
 
 @pytest.fixture
@@ -101,3 +102,92 @@ def test_acesso_setor_restrito(admin_token):
     list_res = httpx.get(f"{API_URL}/processos/", headers=headers_user)
     for p in list_res.json()["processos"]:
         assert p["setor_responsavel"] == "Juridico"
+
+
+def _criar_usuario_setor(setor, admin_token):
+    """Cadastra um usuário comum no setor informado e devolve os headers de auth."""
+    headers_admin = {"Authorization": f"Bearer {admin_token}"}
+    user_payload = {
+        "nome": f"Usuário {setor} Teste",
+        "email": f"teste_{setor.lower()}_{os.urandom(3).hex()}@teste.com",
+        "senha": "password123",
+        "cargo": "usuario",
+        "setor": setor,
+    }
+    create_res = httpx.post(f"{API_URL}/usuarios/cadastrar", json=user_payload, headers=headers_admin)
+    assert create_res.status_code == 201
+
+    login_res = httpx.post(
+        f"{BASE_URL}/login",
+        json={"email": user_payload["email"], "senha": "password123"},
+    )
+    assert login_res.status_code == 200
+    return {"Authorization": f"Bearer {login_res.json()['access_token']}"}
+
+
+def _criar_processo_admin(admin_token, setor="Administrativo"):
+    """Cadastra um processo 'Disponível' no setor informado e devolve o id."""
+    headers_admin = {"Authorization": f"Bearer {admin_token}"}
+    status_res = httpx.get(f"{API_URL}/configuracoes/status", headers=headers_admin)
+    status_id = [s["id"] for s in status_res.json() if s["nome"] == "Disponível"][0]
+
+    payload = {
+        "nome_cliente": "Cliente Restricao Teste",
+        "cpf_cnpj": f"222.222.222-{os.urandom(2).hex()}",
+        "numero_contrato": f"REST-{os.urandom(4).hex()}",
+        "tipo_processo": "Cadastro",
+        "setor_responsavel": setor,
+        "status_id": status_id,
+    }
+    create_res = httpx.post(f"{API_URL}/processos/cadastrar", json=payload, headers=headers_admin)
+    assert create_res.status_code == 201
+    return create_res.json()["id"]
+
+
+def test_historico_setor_restrito(admin_token):
+    processo_id = _criar_processo_admin(admin_token, setor="Administrativo")
+    headers_user = _criar_usuario_setor("Juridico", admin_token)
+
+    res = httpx.get(f"{API_URL}/processos/{processo_id}/historico", headers=headers_user)
+    assert res.status_code == 404
+
+
+def test_retirada_setor_restrito(admin_token):
+    processo_id = _criar_processo_admin(admin_token, setor="Administrativo")
+    headers_user = _criar_usuario_setor("Juridico", admin_token)
+
+    res = httpx.post(
+        f"{API_URL}/processos/movimentar/retirada",
+        params={"processo_id": processo_id, "setor_destino": "Juridico"},
+        headers=headers_user,
+    )
+    assert res.status_code == 404
+
+    # O processo não pode ter sido movimentado: continua "Disponível"
+    headers_admin = {"Authorization": f"Bearer {admin_token}"}
+    list_res = httpx.get(f"{API_URL}/processos/", headers=headers_admin)
+    proc = [p for p in list_res.json()["processos"] if p["id"] == processo_id][0]
+    assert proc["status"]["nome"] == "Disponível"
+
+
+def test_devolucao_setor_restrito(admin_token):
+    headers_admin = {"Authorization": f"Bearer {admin_token}"}
+    processo_id = _criar_processo_admin(admin_token, setor="Administrativo")
+
+    # Admin retira para um terceiro setor, gerando movimentação ativa
+    ret_res = httpx.post(
+        f"{API_URL}/processos/movimentar/retirada",
+        params={"processo_id": processo_id, "setor_destino": "Fiscalizacao"},
+        headers=headers_admin,
+    )
+    assert ret_res.status_code == 200
+    mov_id = ret_res.json()["id"]
+
+    # Usuário de um setor sem relação com o processo não pode devolver
+    headers_user = _criar_usuario_setor("Juridico", admin_token)
+    res = httpx.post(
+        f"{API_URL}/processos/movimentar/devolucao",
+        json={"movimentacao_id": mov_id, "novo_status_processo": "Disponível"},
+        headers=headers_user,
+    )
+    assert res.status_code == 404

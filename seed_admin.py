@@ -1,42 +1,63 @@
+import os
+
 from app.database.session import SessionLocal, engine, Base
-from app.models import Usuario, StatusProcesso, Processo, Movimentacao, LogAuditoria, Setor, TipoProcesso
+# Importa todos os módulos de modelo para registrar os relacionamentos do ORM
+from app.models import (  # noqa: F401
+    processo,
+    movimentacao,
+    usuario,
+    log,
+    tipo_processo,
+    setor,
+    status_processo,
+)
+from app.models.usuario import Usuario
+from app.models.status_processo import StatusProcesso
 from app.services.auth_service import get_password_hash
 
+STATUS_INICIAIS = ["Disponível", "Em Posse", "Pendente", "Liquidado", "Arquivado"]
+ADMIN_EMAIL = "admin@docuab.com"
+
+
 def seed_status(db):
-    status_iniciais = ["Disponível", "Em Posse", "Pendente", "Liquidado", "Arquivado"]
-    for nome in status_iniciais:
+    for nome in STATUS_INICIAIS:
         exists = db.query(StatusProcesso).filter(StatusProcesso.nome == nome).first()
         if not exists:
-            novo_status = StatusProcesso(nome=nome)
-            db.add(novo_status)
+            db.add(StatusProcesso(nome=nome))
             print(f"Status criado: {nome}")
-        db.commit()
+    db.commit()
 
-        def seed_admin():
-            # Garantir que as tabelas existam
-            Base.metadata.create_all(bind=engine)
+
+def seed_admin(db):
+    admin_exists = db.query(Usuario).filter(Usuario.email == ADMIN_EMAIL).first()
+    if admin_exists:
+        print("Usuário administrador já existe.")
+        return
+
+    senha = os.getenv("ADMIN_SENHA", "admin123")
+    admin = Usuario(
+        nome="Administrador",
+        email=ADMIN_EMAIL,
+        senha_hash=get_password_hash(senha),
+        cargo="admin",
+        ativo=True,
+    )
+    db.add(admin)
+    db.commit()
+    print(f"Usuário administrador inicial criado: {ADMIN_EMAIL}")
+
+
+def main():
+    # Garantir que as tabelas existam
+    Base.metadata.create_all(bind=engine)
 
     db = SessionLocal()
     try:
-        # Criar status iniciais primeiro
         seed_status(db)
-
-        admin_exists = db.query(Usuario).filter(Usuario.email == "admin@docuab.com").first()
-        if not admin_exists:
-            admin = Usuario(
-                nome="Administrador",
-                email="admin@docuab.com",
-                senha_hash=get_password_hash("admin123"),
-                cargo="admin",
-                ativo=True
-            )
-            db.add(admin)
-            db.commit()
-            print("Usuário administrador inicial criado: admin@docuab.com / admin123")
-        else:
-            print("Usuário administrador já existe.")
+        seed_admin(db)
     finally:
         db.close()
 
+
 if __name__ == "__main__":
-    seed_admin()
+    main()

@@ -1,7 +1,8 @@
+import logging
 import os
 from passlib.context import CryptContext
 from jose import JWTError, jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Request, Depends
 from app.models.usuario import Usuario
@@ -13,9 +14,15 @@ from app.schemas.usuario_schema import UsuarioCriar, UsuarioEditar
 
 load_dotenv()
 
-SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY or SECRET_KEY in ("your-secret-key", "TROQUE_POR_UMA_CHAVE_FORTE_ALEATORIA"):
+    raise RuntimeError(
+        "SECRET_KEY não definida ou inválida nas variáveis de ambiente. "
+        "Copie .env.example para .env e gere uma chave: "
+        "python -c \"import secrets; print(secrets.token_hex(32))\""
+    )
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 60 * 24)) # 24 horas para facilitar
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -27,7 +34,7 @@ def get_password_hash(password: str) -> str:
 
 def criar_access_token(data: dict):
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -87,21 +94,12 @@ def autenticar_usuario(db: Session, email: str, senha_plana: str):
     return usuario
 
 def get_current_user(request: Request, db: Session = Depends(get_db)):
-    # Tentar obter do Header Authorization (Padrão SPA)
+    # Autenticação exclusivamente via header Authorization (Bearer) — SPA
     auth_header = request.headers.get("Authorization")
     token = None
-    
+
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header[7:]
-    
-    # Se não houver no header, tentar no cookie (Legado/Jinja2)
-    if not token:
-        token_cookie = request.cookies.get("access_token")
-        if token_cookie:
-            if token_cookie.startswith("Bearer "):
-                token = token_cookie[7:]
-            else:
-                token = token_cookie
 
     if not token:
         raise HTTPException(
@@ -139,12 +137,24 @@ def is_admin(usuario: Usuario):
         )
     return True
 
+def require_admin(current_user: Usuario = Depends(get_current_user)):
+    """Dependency de rota: exige usuário autenticado com cargo 'admin'."""
+    is_admin(current_user)
+    return current_user
+
 def registrar_log_auditoria(db: Session, usuario_id: int, acao: str, recurso: str, detalhes: str):
-    novo_log = LogAuditoria(
-        usuario_id = usuario_id,
-        acao_realizada = acao,
-        recurso_afetado = recurso,
-        detalhes = detalhes
-    )
-    db.add(novo_log)
-    db.commit()
+    """Registra ação crítica em logs_auditoria. Falha de log não interrompe a operação."""
+    try:
+        novo_log = LogAuditoria(
+            usuario_id=usuario_id,
+            acao_realizada=acao,
+            recurso_afetado=recurso,
+            detalhes=detalhes
+        )
+        db.add(novo_log)
+        db.commit()
+    except Exception:
+        db.rollback()
+        logging.getLogger(__name__).exception(
+            "Falha ao registrar log de auditoria (%s/%s)", acao, recurso
+        )

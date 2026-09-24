@@ -1,0 +1,33 @@
+# Ambientes virtuais
+.venv
+venv
+env
+
+# Dependências e build do frontend (instalados dentro da imagem)
+frontend/node_modules
+frontend/dist
+
+# Python
+**/__pycache__
+*.py[cod]
+.pytest_cache
+
+# Controle de versão e editor
+.git
+.github
+.vscode
+.idea
+
+# Dados e logs locais
+data/
+*.log
+*.pid
+uvicorn_*.log
+
+# Segredos — nunca enviamos para o contexto de build
+.env
+
+# Documentos e testes (não necessários na imagem)
+tests/
+*.md
+telas.pdf

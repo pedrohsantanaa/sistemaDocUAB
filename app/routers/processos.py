@@ -2,13 +2,26 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from app.database.session import get_db
-from app.services import processo_service, auth_service, configuracao_service, movimentacao_service
+from app.services import processo_service, auth_service, movimentacao_service
 from app.models.usuario import Usuario
 from app.schemas.processo_schema import ProcessoCriar, ProcessoSchema
 from app.schemas.movimentacao_schema import MovimentacaoCriar, MovimentacaoDevolucao
 import logging
 
 router = APIRouter(prefix="/api/processos", tags=["Processos"])
+
+def _serializar_movimentacao(mov):
+    """Converte a movimentação em dict antes do commit do log de auditoria.
+    Esse commit expira os objetos da sessão e a resposta sairia vazia ({})."""
+    return {
+        "id": mov.id,
+        "processo_id": mov.processo_id,
+        "usuario_id": mov.usuario_id,
+        "setor_destino": mov.setor_destino,
+        "observacoes": mov.observacoes,
+        "data_retirada": mov.data_retirada,
+        "data_devolucao": mov.data_devolucao,
+    }
 
 @router.get("/")
 async def listar_processos(
@@ -54,9 +67,11 @@ async def listar_processos(
             }
         }
 
-    except Exception as e:
-        logging.error(f"Erro ao listar processos: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        logging.exception("Erro ao listar processos")
+        raise HTTPException(status_code=500, detail="Erro interno ao listar processos.")
 
 @router.post("/cadastrar", status_code=status.HTTP_201_CREATED)
 async def cadastrar_processo(
@@ -66,10 +81,16 @@ async def cadastrar_processo(
 ):
     try:
         novo_processo = processo_service.criar_processo(db, dados, current_user)
+        auth_service.registrar_log_auditoria(
+            db, current_user.id, "criar_processo", f"processo:{novo_processo.id}",
+            f"Processo '{novo_processo.numero_contrato}' cadastrado"
+        )
         return ProcessoSchema.from_orm(novo_processo)
-    except Exception as e:
-        logging.error(f"Erro ao cadastrar processo: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        logging.exception("Erro ao cadastrar processo")
+        raise HTTPException(status_code=400, detail="Não foi possível cadastrar o processo.")
 
 @router.get("/{processo_id}/historico")
 async def historico_processo(
@@ -78,11 +99,15 @@ async def historico_processo(
     current_user: Usuario = Depends(auth_service.get_current_user)
 ):
     try:
-        dados_historico = processo_service.consultar_historico_processo(db, processo_id)
+        dados_historico = processo_service.consultar_historico_processo(
+            db, processo_id, current_user
+        )
         return dados_historico
-    except Exception as e:
-        logging.error(f"Erro ao consultar histórico: {e}")
-        raise HTTPException(status_code=404, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        logging.exception("Erro ao consultar histórico do processo %s", processo_id)
+        raise HTTPException(status_code=404, detail="Processo não localizado.")
 
 @router.post("/movimentar/retirada")
 async def retirar_processo(
@@ -99,10 +124,18 @@ async def retirar_processo(
             setor_destino=setor_destino,
             observacoes=observacoes
         )
-        return movimentacao_service.registrar_retirada(db, mov_dados)
-    except Exception as e:
-        logging.error(f"Erro ao registrar retirada: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+        mov = movimentacao_service.registrar_retirada(db, mov_dados, current_user)
+        resposta = _serializar_movimentacao(mov)
+        auth_service.registrar_log_auditoria(
+            db, current_user.id, "retirada_processo", f"processo:{processo_id}",
+            f"Retirada para o setor '{setor_destino}'"
+        )
+        return resposta
+    except HTTPException:
+        raise
+    except Exception:
+        logging.exception("Erro ao registrar retirada do processo %s", processo_id)
+        raise HTTPException(status_code=400, detail="Não foi possível registrar a retirada.")
 
 @router.post("/movimentar/devolucao")
 async def devolver_processo(
@@ -111,23 +144,17 @@ async def devolver_processo(
     current_user: Usuario = Depends(auth_service.get_current_user)
 ):
     try:
-        return movimentacao_service.registrar_devolucao(db, dados)
-    except Exception as e:
-        logging.error(f"Erro ao registrar devolução: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
-
-@router.get("/tipos")
-async def listar_tipos(
-    db: Session = Depends(get_db),
-    current_user: Usuario = Depends(auth_service.get_current_user)
-):
-    return configuracao_service.get_tipos_processo(db)
-
-@router.get("/setores")
-async def listar_setores(
-    db: Session = Depends(get_db),
-    current_user: Usuario = Depends(auth_service.get_current_user)
-):
-    return configuracao_service.get_setores(db)
-
+        mov = movimentacao_service.registrar_devolucao(db, dados, current_user)
+        resposta = _serializar_movimentacao(mov)
+        auth_service.registrar_log_auditoria(
+            db, current_user.id, "devolucao_processo",
+            f"processo:{resposta['processo_id']}",
+            "Devolução registrada"
+        )
+        return resposta
+    except HTTPException:
+        raise
+    except Exception:
+        logging.exception("Erro ao registrar devolução")
+        raise HTTPException(status_code=400, detail="Não foi possível registrar a devolução.")
 

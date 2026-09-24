@@ -21,11 +21,19 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copiar o build do frontend do estágio anterior
-COPY --from=frontend-build /frontend/dist/ /app/static_dist/
+# (o app/main.py serve o SPA a partir do diretório 'static')
+COPY --from=frontend-build /frontend/dist/ /app/static/
 
 # Copiar o código do backend
 COPY app/ ./app/
-COPY .env* seed_admin.py ./
+COPY seed_admin.py ./
+COPY entrypoint.sh ./
+RUN chmod +x entrypoint.sh
 
-# Comando para iniciar o servidor
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Usuário não privilegiado — a aplicação não roda como root (V03)
+RUN addgroup --system appuser && adduser --system --group appuser \
+    && chown -R appuser:appuser /app
+USER appuser
+
+# Comando para iniciar o servidor (semeia o banco e sobe o uvicorn)
+CMD ["./entrypoint.sh"]

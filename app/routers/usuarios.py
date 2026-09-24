@@ -12,9 +12,8 @@ router = APIRouter(prefix="/api/usuarios", tags=["Usuários"])
 @router.get("/", response_model=List[UsuarioSchema])
 async def listar_usuarios(
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(auth_service.get_current_user)
+    current_user: Usuario = Depends(auth_service.require_admin)
 ):
-    auth_service.is_admin(current_user)
     usuarios = db.query(Usuario).all()
     return usuarios
 
@@ -22,27 +21,37 @@ async def listar_usuarios(
 async def cadastrar_usuario(
     dados: UsuarioCriar,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(auth_service.get_current_user)
+    current_user: Usuario = Depends(auth_service.require_admin)
 ):
-    auth_service.is_admin(current_user)
     try:
         novo_usuario = auth_service.criar_usuario(db, dados)
+        auth_service.registrar_log_auditoria(
+            db, current_user.id, "criar_usuario", f"usuario:{novo_usuario.id}",
+            f"Usuário '{novo_usuario.email}' criado"
+        )
         return novo_usuario
-    except Exception as e:
-        logging.error(f"Erro ao cadastrar usuário: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        logging.exception("Erro ao cadastrar usuário")
+        raise HTTPException(status_code=400, detail="Não foi possível cadastrar o usuário.")
 
 @router.put("/{usuario_id}", response_model=UsuarioSchema)
 async def editar_usuario(
     usuario_id: int,
     dados: UsuarioEditar,
     db: Session = Depends(get_db),
-    current_user: Usuario = Depends(auth_service.get_current_user)
+    current_user: Usuario = Depends(auth_service.require_admin)
 ):
-    auth_service.is_admin(current_user)
     try:
         usuario_atualizado = auth_service.atualizar_usuario(db, usuario_id, dados)
+        auth_service.registrar_log_auditoria(
+            db, current_user.id, "editar_usuario", f"usuario:{usuario_id}",
+            f"Usuário '{usuario_atualizado.email}' atualizado"
+        )
         return usuario_atualizado
-    except Exception as e:
-        logging.error(f"Erro ao editar usuário {usuario_id}: {e}")
-        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception:
+        logging.exception("Erro ao editar usuário %s", usuario_id)
+        raise HTTPException(status_code=400, detail="Não foi possível editar o usuário.")

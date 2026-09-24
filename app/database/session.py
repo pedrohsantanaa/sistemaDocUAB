@@ -15,7 +15,9 @@ DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@db:5432
 
 # O 'engine' é o ponto central de conexão com o banco.
 # Em PostgreSQL não precisamos do connect_args do SQLite.
-engine = create_engine(DATABASE_URL)
+# pool_pre_ping: descarta conexões mortas (ex.: reinício do container do banco).
+# pool_recycle: renova conexões antes de serem derrubadas por NAT/proxies ociosos.
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_recycle=1800)
 
 # SessionLocal é uma classe que criará instâncias de sessões de banco de dados.
 # Estas sessões serão usadas para realizar operações (Insert, Update, Select).

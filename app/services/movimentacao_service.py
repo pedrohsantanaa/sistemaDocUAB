@@ -6,10 +6,17 @@ from app.models.status_processo import StatusProcesso
 from app.schemas.movimentacao_schema import MovimentacaoCriar, MovimentacaoDevolucao
 from datetime import datetime
 
-def registrar_retirada(db: Session, dados: MovimentacaoCriar):
+def _processo_visivel_para(processo, usuario_atual):
+    """Usuário não-admin só enxerga processos do próprio setor."""
+    if usuario_atual and usuario_atual.cargo != "admin" \
+            and processo.setor_responsavel != usuario_atual.setor:
+        return False
+    return True
+
+def registrar_retirada(db: Session, dados: MovimentacaoCriar, usuario_atual=None):
     processo = db.query(Processo).filter(Processo.id == dados.processo_id).first()
     
-    if not processo:
+    if not processo or not _processo_visivel_para(processo, usuario_atual):
         raise HTTPException(status_code=404, detail="Processo não encontrado")
     
     # Busca o status "Disponível" para verificar se pode retirar
@@ -40,7 +47,7 @@ def registrar_retirada(db: Session, dados: MovimentacaoCriar):
     
     return nova_movimentacao
 
-def registrar_devolucao(db: Session, dados: MovimentacaoDevolucao):
+def registrar_devolucao(db: Session, dados: MovimentacaoDevolucao, usuario_atual=None):
     mov = db.query(Movimentacao).filter(
         Movimentacao.id == dados.movimentacao_id, 
         Movimentacao.data_devolucao == None
@@ -50,6 +57,13 @@ def registrar_devolucao(db: Session, dados: MovimentacaoDevolucao):
         raise HTTPException(status_code=404, detail="Movimentação ativa não encontrada")
         
     processo = db.query(Processo).filter(Processo.id == mov.processo_id).first()
+    if not processo:
+        raise HTTPException(status_code=404, detail="Movimentação ativa não encontrada")
+    # Na devolução, além do setor dono do processo, também pode o setor que
+    # está com o processo em posse (setor_destino da movimentação).
+    if usuario_atual and usuario_atual.cargo != "admin" \
+            and usuario_atual.setor not in (processo.setor_responsavel, mov.setor_destino):
+        raise HTTPException(status_code=404, detail="Movimentação ativa não encontrada")
     
     mov.data_devolucao = datetime.now()
     

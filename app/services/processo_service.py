@@ -4,6 +4,7 @@ Responsável pela lógica de negócio relacionada à gestão de processos físic
 """
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
+import logging
 from app.models.processo import Processo
 from app.models.movimentacao import Movimentacao
 from app.schemas.processo_schema import ProcessoCriar
@@ -41,22 +42,32 @@ def criar_processo(db: Session, dados: ProcessoCriar, usuario_atual=None):
         db.commit()
         db.refresh(novo_processo)
         return novo_processo
-    except Exception as e:
+    except Exception:
         db.rollback()
+        logging.exception("Erro ao criar processo %s", dados.numero_contrato)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
             detail="Não foi possível cadastrar o processo no momento."
         )
 
-def consultar_historico_processo(db: Session, id_processo: int):
+def consultar_historico_processo(db: Session, id_processo: int, usuario_atual=None):
     """
     Retorna os detalhes de um processo e sua lista completa de movimentações.
+    Usuários não-admin só acessam processos do próprio setor (resposta 404
+    para não revelar a existência de processos de outros setores).
     """
     processo = db.query(Processo).filter(Processo.id == id_processo).first()
     
     if not processo:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Processo não localizado no sistema."
+        )
+
+    if usuario_atual and usuario_atual.cargo != "admin" \
+            and processo.setor_responsavel != usuario_atual.setor:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Processo não localizado no sistema."
         )
         

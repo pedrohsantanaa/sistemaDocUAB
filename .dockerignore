@@ -10,7 +10,7 @@ frontend/dist
 # Python
 **/__pycache__
 *.py[cod]
-.pytest_cache
+**/.pytest_cache
 
 # Controle de versão e editor
 .git
@@ -28,6 +28,6 @@ uvicorn_*.log
 .env
 
 # Documentos e testes (não necessários na imagem)
-tests/
+backend/tests/
 *.md
 telas.pdf

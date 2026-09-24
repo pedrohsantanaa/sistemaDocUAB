@@ -3,8 +3,8 @@ import httpx
 import os
 
 # Configurações para os testes
-# 127.0.0.1 evita que 'localhost' resolva para IPv6/outros serviços na porta 8000
-BASE_URL = "http://127.0.0.1:8000"
+# 127.0.0.1 evita que 'localhost' resolva para IPv6/outros serviços na porta 8050
+BASE_URL = "http://127.0.0.1:8050"
 API_URL = f"{BASE_URL}/api"
 
 @pytest.fixture

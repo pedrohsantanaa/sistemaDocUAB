@@ -33,7 +33,7 @@ services:
     build: .
     container_name: sistema_processos_web
     ports:
-      - "8001:8000"
+      - "8001:8050"
     depends_on:
       db:
         condition: service_healthy

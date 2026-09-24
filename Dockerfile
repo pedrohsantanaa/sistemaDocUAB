@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+COPY backend/requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
@@ -24,10 +24,10 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # (o app/main.py serve o SPA a partir do diretório 'static')
 COPY --from=frontend-build /frontend/dist/ /app/static/
 
-# Copiar o código do backend
-COPY app/ ./app/
-COPY seed_admin.py ./
-COPY entrypoint.sh ./
+# Copiar o código do backend (o pacote Python continua se chamando 'app')
+COPY backend/app/ ./app/
+COPY backend/seed_admin.py ./
+COPY backend/entrypoint.sh ./
 RUN chmod +x entrypoint.sh
 
 # Usuário não privilegiado — a aplicação não roda como root (V03)

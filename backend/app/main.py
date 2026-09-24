@@ -15,7 +15,7 @@ app = FastAPI(title="Sistema de Gestão Documental - Fomento Tocantins")
 # Configurar CORS com origens permitidas explícitas (via ALLOWED_ORIGINS)
 _origens = os.getenv(
     "ALLOWED_ORIGINS",
-    "http://localhost:5173,http://localhost:8000,http://localhost:8001,http://localhost",
+    "http://localhost:5173,http://localhost:8050,http://localhost:8001,http://localhost",
 )
 ALLOWED_ORIGINS = [o.strip() for o in _origens.split(",") if o.strip()]
 

@@ -60,27 +60,30 @@ Certifique-se de ter um PostgreSQL rodando e crie um banco chamado `sistemadocua
 # Entrar na pasta raiz
 cd sistemaDocUAB
 
-# Criar e ativar ambiente virtual
+# Criar e ativar ambiente virtual (na raiz)
 python -m venv venv
 source venv/bin/activate  # Linux/macOS
 # .\venv\Scripts\activate # Windows
 
 # Instalar dependências
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
 
 # Criar arquivo .env
 cp .env.example .env # Caso exista, ou crie manualmente
 
-# Executar script de semente (Admin inicial)
-PYTHONPATH=. python seed_admin.py
+# Entrar na pasta do backend
+cd backend
 
-# Iniciar o servidor
-uvicorn app.main:app --reload
+# Executar script de semente (Admin inicial)
+python seed_admin.py
+
+# Iniciar o servidor (porta 8050)
+uvicorn app.main:app --reload --port 8050
 ```
 
 #### 3. Frontend (Vue.js)
 ```bash
-# Entrar na pasta do frontend
+# Entrar na pasta do frontend (a partir da raiz)
 cd frontend
 
 # Instalar dependências
@@ -89,18 +92,30 @@ npm install
 # Iniciar servidor de desenvolvimento
 npm run dev
 ```
-Acesse `http://localhost:5173` (ou a porta indicada pelo Vite).
+Acesse `http://localhost:5173` (ou a porta indicada pelo Vite). O proxy do Vite
+encaminha `/api`, `/login`, `/docs` etc. para `http://127.0.0.1:8050`.
+
+#### 4. Testes
+```bash
+# Com o backend rodando em 127.0.0.1:8050 e o banco ativo (docker compose up -d db)
+cd backend
+pytest -q
+```
 
 ## 📁 Estrutura do Projeto
 
 ```text
-├── app/                # Backend FastAPI
-│   ├── database/       # Conexão e sessão do banco
-│   ├── models/         # Modelos SQLAlchemy
-│   ├── routers/        # Rotas da API
-│   ├── schemas/        # Schemas Pydantic
-│   ├── services/       # Lógica de negócio
-│   └── templates/      # (Opcional) Templates legados
+├── backend/            # Backend FastAPI
+│   ├── app/
+│   │   ├── database/   # Conexão e sessão do banco
+│   │   ├── models/     # Modelos SQLAlchemy
+│   │   ├── routers/    # Rotas da API
+│   │   ├── schemas/    # Schemas Pydantic
+│   │   └── services/   # Lógica de negócio
+│   ├── tests/          # Testes (pytest)
+│   ├── seed_admin.py   # Semente do admin inicial
+│   ├── entrypoint.sh   # Start do container (seed + uvicorn)
+│   └── requirements.txt
 ├── frontend/           # Frontend Vue.js 3
 │   ├── src/
 │   │   ├── api/        # Integração com backend (Axios)
